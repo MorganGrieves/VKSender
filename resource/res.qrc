@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>style/fonts/LICENSE.txt</file>
+        <file>style/fonts/Roboto-Black.ttf</file>
+        <file>style/fonts/Roboto-BlackItalic.ttf</file>
+        <file>style/fonts/Roboto-Bold.ttf</file>
+        <file>style/fonts/Roboto-BoldItalic.ttf</file>
+        <file>style/fonts/Roboto-Italic.ttf</file>
+        <file>style/fonts/Roboto-Light.ttf</file>
+        <file>style/fonts/Roboto-LightItalic.ttf</file>
+        <file>style/fonts/Roboto-Medium.ttf</file>
+        <file>style/fonts/Roboto-MediumItalic.ttf</file>
+        <file>style/fonts/Roboto-Regular.ttf</file>
+        <file>style/fonts/Roboto-Thin.ttf</file>
+        <file>style/fonts/Roboto-ThinItalic.ttf</file>
+        <file>style/image/vk_logo.svg</file>
+        <file>style/image/download.svg</file>
+        <file>style/image/exm.png</file>
+    </qresource>
+</RCC>

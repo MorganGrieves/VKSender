@@ -1,0 +1,133 @@
+#include "grouptableedit.h"
+#include "ui_grouptableedit.h"
+
+#include <QLineEdit>
+#include <QObject>
+
+GroupTableEdit::GroupTableEdit(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::GroupTableEdit)
+{
+    ui->setupUi(this);
+
+    connect(ui->addLinkButton, &QPushButton::released,
+            this, &GroupTableEdit::onAddLinkButtonReleased);
+    connect(ui->sendGroupListButton, &QPushButton::released,
+            this, &GroupTableEdit::onSendButtonReleased);
+    connect(ui->deleteAllLinkButton, &QPushButton::released,
+            [this]()
+            {
+                ui->linksBeforeSendList->clear();
+                mGroup.clear();
+            });
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [=]()
+    {
+        mRepository->setGroupData(mGroup);
+        this->close();
+    });
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, [=]()
+    {
+        this->close();
+    });
+    connect(ui->linksBeforeSendList, &QListWidget::itemDoubleClicked, [this](QListWidgetItem *item)
+    {
+        //!Удаление элемента
+        //QFrame groupFrame = qobject_cast<QFrame>(item->data(0).value());
+
+        delete item;
+    });
+}
+
+void GroupTableEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
+{
+    mFetcher = fetcher;
+
+    connect(this, &GroupTableEdit::sendGroupLinks,
+            mFetcher.get(), &Fetcher::onGroupDataNeed);
+
+}
+
+void GroupTableEdit::setRepository(const std::shared_ptr<Repository> repository)
+{
+    mRepository = repository;
+
+    for (const auto &group : mRepository->getGroupData())
+        addGroupFrame(group);
+}
+
+void GroupTableEdit::addGroupFrame(Group group)
+{
+    QFrame *groupFrame = new QFrame(ui->linksBeforeSendList);
+    groupFrame->setStyleSheet("border: 1px blue;"
+                              "background-color: red;");
+
+    QLayout *groupFrameLayout = new QHBoxLayout();
+
+    QLabel *vkLinkLabel = new QLabel("https://vk.com/");
+    vkLinkLabel->setAlignment(Qt::AlignRight);
+    vkLinkLabel->setStyleSheet(//"background-color: white;"
+                               "margin: 5px;"
+                               "color:#656565;");
+
+    QLabel *vkNameLabel = new QLabel("");
+    vkNameLabel->setObjectName("groupNameLabel");
+    vkNameLabel->setAlignment(Qt::AlignRight);
+    vkNameLabel->setStyleSheet(//"background-color: white;"
+                               "margin: 5px;"
+                               "color:blue;");
+
+    QLineEdit *linkLineEdit = new QLineEdit;
+    linkLineEdit->setStyleSheet("border: 1px solid black;");
+    if (group.vkid)
+        linkLineEdit->setText(QString::number(group.vkid));
+
+    groupFrameLayout->addWidget(vkLinkLabel);
+    groupFrameLayout->addWidget(linkLineEdit);
+    groupFrameLayout->addWidget(vkNameLabel);
+    groupFrame->setLayout(groupFrameLayout);
+
+    QListWidgetItem* item = new QListWidgetItem( ui->linksBeforeSendList );
+    item->setSizeHint( groupFrame->sizeHint() );
+    ui->linksBeforeSendList->setItemWidget( item, groupFrame );
+}
+
+void GroupTableEdit::onAddLinkButtonReleased()
+{
+    addGroupFrame();
+}
+
+void GroupTableEdit::onSendButtonReleased()
+{
+    std::vector<Link> groupLinks;
+    const auto links = ui->linksBeforeSendList->findChildren<QLineEdit *>();
+    for (const auto &link : links)
+        groupLinks.push_back(link->text());
+    connect (mFetcher.get(), &Fetcher::updatedGroupData,
+             this, &GroupTableEdit::onGroupVectorReceived);
+    emit sendGroupLinks(groupLinks);
+}
+
+void GroupTableEdit::onGroupVectorReceived(const std::vector<Group> groups)
+{
+    mGroup.clear();
+    const auto links = ui->linksBeforeSendList->findChildren<QLineEdit *>();
+
+    for (const auto &link : links)
+        for (const auto &group : groups)
+        {
+            QFrame *groupFrame = qobject_cast< QFrame* >(link->parent());
+            if (link->text() == group.link || link->text().toDouble() == group.vkid)
+            {
+                groupFrame->setStyleSheet("background-color: green;");
+                mGroup.push_back(group);
+
+                groupFrame->findChild<QLabel*>("groupNameLabel")->setText(group.name);
+            }
+        }
+}
+
+
+GroupTableEdit::~GroupTableEdit()
+{
+    delete ui;
+}
