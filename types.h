@@ -4,7 +4,7 @@
 using Path = QString;
 
 using Id = std::size_t;
-using GroupId = double;
+using GroupId = QString;
 using Name = QString;
 using Link = QString;
 using Members = unsigned int;
@@ -12,7 +12,7 @@ using Members = unsigned int;
 struct Group
 {
     Id id = 0;
-    GroupId vkid = 0;
+    GroupId vkid = "";
     Name name = "";
     Link link = "";
     Link photo = "";

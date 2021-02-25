@@ -5,6 +5,7 @@
 
 #include "repository.h"
 #include "fetcher.h"
+#include "types.h"
 
 namespace Ui {
 class GroupTableEdit;

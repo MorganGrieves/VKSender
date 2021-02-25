@@ -24,15 +24,16 @@ Repository::Repository()
 
 }
 
-std::vector<Group> Repository::getGroupData() const
+Repository::~Repository()
 {
-    return mGroups;
+
 }
 
 void Repository::clearAll()
 {
     mGroups.clear();
 }
+
 
 void Repository::setGroupData(const std::vector<Group> groups)
 {
@@ -41,7 +42,7 @@ void Repository::setGroupData(const std::vector<Group> groups)
     emit groupDataUpdated();
 }
 
-Repository::~Repository()
+std::vector<Group> Repository::getGroupData() const
 {
-
+    return mGroups;
 }

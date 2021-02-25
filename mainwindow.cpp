@@ -21,13 +21,15 @@ MainWindow::MainWindow(QWidget *parent)
     mRepository = std::make_shared<Repository>();
     mFetcher = std::make_shared<Fetcher>();
     mGroupTableEdit = std::make_shared<GroupTableEdit>(this);
+    mSendingProgress = std::make_shared<SendingProgress>(this);
+
+    mFetcher->setRepository(mRepository);
 
     mGroupTableEdit->setFetcher(mFetcher);
     mGroupTableEdit->setRepository(mRepository);
 
-    mFetcher->setRepository(mRepository);
-
-    QEventLoop loop;
+    mSendingProgress->setFetcher(mFetcher);
+    mSendingProgress->setRepository(mRepository);
 
     connect(ui->editListButton, &QPushButton::released,
             this, &MainWindow::onEditListButtonReleased);
@@ -38,8 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->sendButton, &QPushButton::released,
             this, &MainWindow::onSendButtonReleased);
 
-    connect(this, &MainWindow::sendMessage,
-            mFetcher.get(), &Fetcher::onMessageSend);
+    connect(this, &MainWindow::messageSent,
+            mSendingProgress.get(), &SendingProgress::onMessageSent);
 
     connect(ui->addNewPhotoButton, &QPushButton::released,
             this, &MainWindow::onAddNewPhotoButtonReleased);
@@ -103,11 +105,19 @@ void MainWindow::onPhotosListWidgetDoubleClicked(const QModelIndex& index)
 
 void MainWindow::onSendButtonReleased()
 {
+
     std::vector<Path> photoPaths;
     for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); it++)
         photoPaths.push_back(it->first);
 
-    emit sendMessage(ui->messageEdit->toPlainText(), photoPaths);
+    if ((ui->messageEdit->toPlainText() == "") || (photoPaths.size() == 0))
+    {
+        QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
+        return;
+    }
+
+    mSendingProgress->open();
+    emit messageSent(ui->messageEdit->toPlainText(), photoPaths);
 }
 
 void MainWindow::onGroupDataUpdated()

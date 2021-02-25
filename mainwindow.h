@@ -3,8 +3,11 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
+
 #include "repository.h"
 #include "grouptableedit.h"
+#include "sendingprogress.h"
+#include "types.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -18,7 +21,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 signals:
-    void sendMessage(const QString messageText, const std::vector<Path> photoPaths);
+    void messageSent(const QString messageText, const std::vector<Path> photoPaths);
 
 private slots:
     void onEditListButtonReleased();
@@ -33,7 +36,8 @@ private:
 
     std::shared_ptr<Repository> mRepository = nullptr;
     std::shared_ptr<Fetcher> mFetcher = nullptr;
-    std::shared_ptr<GroupTableEdit> mGroupTableEdit;
+    std::shared_ptr<GroupTableEdit> mGroupTableEdit = nullptr;
+    std::shared_ptr<SendingProgress> mSendingProgress = nullptr;
     std::map<Path, QListWidgetItem *> mPhotoPaths;
 };
 #endif // MAINWINDOW_H

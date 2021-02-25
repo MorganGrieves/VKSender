@@ -30,7 +30,6 @@ public:
     std::vector<Group> getGroupData() const;
 
 signals:
-    void needGroupData();
     void groupDataUpdated();
 
 private:

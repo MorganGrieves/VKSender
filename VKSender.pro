@@ -21,6 +21,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     repository.cpp \
+    sendingprogress.cpp \
     types.cpp
 
 HEADERS += \
@@ -28,11 +29,13 @@ HEADERS += \
     grouptableedit.h \
     mainwindow.h \
     repository.h \
+    sendingprogress.h \
     types.h
 
 FORMS += \
     grouptableedit.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    sendingprogress.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

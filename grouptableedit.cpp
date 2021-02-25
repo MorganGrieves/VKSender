@@ -78,8 +78,8 @@ void GroupTableEdit::addGroupFrame(Group group)
 
     QLineEdit *linkLineEdit = new QLineEdit;
     linkLineEdit->setStyleSheet("border: 1px solid black;");
-    if (group.vkid)
-        linkLineEdit->setText(QString::number(group.vkid));
+    if (!group.vkid.isEmpty())
+        linkLineEdit->setText(group.vkid);
 
     groupFrameLayout->addWidget(vkLinkLabel);
     groupFrameLayout->addWidget(linkLineEdit);
@@ -116,7 +116,7 @@ void GroupTableEdit::onGroupVectorReceived(const std::vector<Group> groups)
         for (const auto &group : groups)
         {
             QFrame *groupFrame = qobject_cast< QFrame* >(link->parent());
-            if (link->text() == group.link || link->text().toDouble() == group.vkid)
+            if (link->text() == group.link || link->text() == group.vkid)
             {
                 groupFrame->setStyleSheet("background-color: green;");
                 mGroup.push_back(group);
@@ -125,7 +125,6 @@ void GroupTableEdit::onGroupVectorReceived(const std::vector<Group> groups)
             }
         }
 }
-
 
 GroupTableEdit::~GroupTableEdit()
 {

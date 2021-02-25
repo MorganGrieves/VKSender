@@ -1,18 +1,19 @@
 #ifndef FETCHER_H
 #define FETCHER_H
 
-#include <types.h>
 #include <vector>
-#include "repository.h"
+#include <string>
 
 #include <QObject>
 #include <QDateTime>
 #include <QFile>
-#include <string>
 #include <QDataStream>
 #include <QString>
 #include <QNetworkReply>
 #include <QEventLoop>
+
+#include <types.h>
+#include "repository.h"
 
 struct Request
 {
@@ -37,7 +38,7 @@ struct Request
         struct getWallUploadServer
         {
             QString method = "photos.getWallUploadServer";
-            QString groupId = "200146314";
+            QString groupId = "";
         };
 
         struct saveWallPhoto
@@ -61,7 +62,6 @@ struct Request
     QString userId = "112836979";
     QString authorizationAccessToken = "";
     QString implicitFlowAccessToken = "";
-    QString serviceAccessToken = "";
     QString apiVersion = "5.130";
 };
 
@@ -77,10 +77,11 @@ public:
 signals:
     void updatedGroupData(std::vector<Group> groups);
     void updatedPhoto();
+    void sentMessage(Group group, bool success);
 
 public slots:
     void onGroupDataNeed(const std::vector<Link> links);
-    void onMessageSend(const QString messageText, const std::vector<Path> photoPaths);
+    void onMessageSent(const QString messageText, const std::vector<Path> photoPaths);
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";
@@ -88,8 +89,6 @@ private:
     QNetworkAccessManager *mNetworkManager;
 
     std::shared_ptr<Repository> mRepository = nullptr;
-
-    inline static Request vkApi;
 
     std::vector<Path> mPhotoPaths;
 };
