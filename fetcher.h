@@ -30,7 +30,7 @@ struct Request
         QString groupIds = "";
         QString description = "";
         QString message = "";
-        QString groupId = "200146314";
+        QString groupId = "";
         QString attachments = "";
     };
     struct Photos
@@ -77,7 +77,10 @@ public:
 signals:
     void updatedGroupData(std::vector<Group> groups);
     void updatedPhoto();
-    void sentMessage(Group group, bool success);
+    void sentMessage(Group group);
+
+    void errorGroupFetch(QString err);
+    void errorMessageSend(QString err);
 
 public slots:
     void onGroupDataNeed(const std::vector<Link> links);

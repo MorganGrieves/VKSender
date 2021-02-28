@@ -29,13 +29,13 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>VK Sender</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="warningLabel">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Подождите пока программа не закончит рассылку. Закройте окно, только после окончания.&lt;span style=&quot; text-decoration: underline;&quot;/&gt;&lt;span style=&quot; text-decoration: underline; color:#ff0000;&quot;&gt;Преждевременное закрытие может послужить непредвиденному поведению. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Подождите пока программа не закончит рассылку. Закройте окно, только после окончания. &lt;span style=&quot; text-decoration: underline; color:#ff0000;&quot;&gt;Преждевременное закрытие может послужить непредвиденному поведению. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

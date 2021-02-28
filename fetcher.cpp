@@ -23,6 +23,9 @@
 #include <QHttpPart>
 #include <QHttpMultiPart>
 #include <QMessageBox>
+#include <QMessageLogger>
+
+static Request vkApi;
 
 Fetcher::Fetcher(QObject *parent) : QObject(parent)
 {
@@ -56,12 +59,12 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
     QNetworkReply *reply = mNetworkManager->get(request);
 
     connect(reply, &QNetworkReply::errorOccurred,
-            [reply]()
+            [reply, this]()
     {
-        qDebug() << "errorOccered" << reply->errorString();
         if (reply->error() != QNetworkReply::NoError)
         {
-            qDebug() << "ERROR:" << reply->errorString();
+            qCritical() << "vkApi.groupById error:" << reply->errorString();
+            emit errorGroupFetch("ERROR: " + reply->errorString());
         }
     });
 
@@ -70,9 +73,28 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
     {
         QJsonParseError parseError;
         const auto data = reply->readAll();
-        qDebug() << data;
         const auto document = QJsonDocument::fromJson(data, &parseError);
+
+        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+        if (QJsonParseError::NoError != parseError.error)
+        {
+            qCritical() << "reply vkApi.groupById finished:" << parseError.errorString();
+            emit errorGroupFetch("ERROR: " + reply->errorString());
+            reply->deleteLater();
+            return;
+        }
+
+        if (!jsonServerErrorObject.isEmpty())
+        {
+            qCritical() << "vkApi.groupById - server error:" << jsonServerErrorObject;
+            emit errorGroupFetch("Ошибка на стороне сервера.");
+            reply->deleteLater();
+            return;
+        }
+
         const QJsonArray jsonResponse = document.object()["response"].toArray();
+        qDebug() << jsonResponse;
 
         std::vector<Group> groups;
         Id id = 0;
@@ -98,174 +120,321 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
 
 void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> photoPaths)
 {
-    // проработать случай не отправки изображения
     vkApi.wallPost.message = messageText;
     mPhotoPaths = photoPaths;
 
+    QEventLoop *groupLoop = new QEventLoop(this);
+    connect(this, &Fetcher::sentMessage, groupLoop, &QEventLoop::quit);
+
+    QEventLoop *loop = new QEventLoop(this);
+    connect(this, &Fetcher::updatedPhoto, loop, &QEventLoop::quit);
+
     for (const auto& group : mRepository->getGroupData())
     {
-        QEventLoop groupLoop;
-        connect(this, &Fetcher::sentMessage, &groupLoop, &QEventLoop::quit);
-
-        vkApi.wallPost.attachments = "";
-
-        QUrl getWallUpdateRequestUrl(mVkApiLink
-                        + vkApi.photos.getWallUploadServer.method
-                        );
-        QUrlQuery params;
-        params.addQueryItem("access_token", vkApi.authorizationAccessToken);
-        params.addQueryItem("v", vkApi.apiVersion);
-        params.addQueryItem("group_id", group.vkid);
-        getWallUpdateRequestUrl.setQuery(params);
-
-        QNetworkRequest getWallUpdateRequest;
-        getWallUpdateRequest.setUrl(getWallUpdateRequestUrl);
-
-        QNetworkReply *reply = mNetworkManager->post(getWallUpdateRequest, params.query().toUtf8());
-
-        connect(reply, &QNetworkReply::errorOccurred,
-                [&reply]()
+        try
         {
-            qDebug() << "errorOccered" << reply->errorString();
-            if (reply->error() != QNetworkReply::NoError)
+            vkApi.wallPost.attachments = "";
+
+            QUrl getWallUpdateRequestUrl(mVkApiLink
+                            + vkApi.photos.getWallUploadServer.method
+                            );
+            QUrlQuery params;
+            params.addQueryItem("access_token", vkApi.authorizationAccessToken);
+            params.addQueryItem("v", vkApi.apiVersion);
+            params.addQueryItem("group_id", group.vkid);
+            getWallUpdateRequestUrl.setQuery(params);
+
+            QNetworkRequest getWallUpdateRequest;
+            getWallUpdateRequest.setUrl(getWallUpdateRequestUrl);
+
+            QNetworkReply *reply = mNetworkManager->post(getWallUpdateRequest, params.query().toUtf8());
+
+            connect(reply, &QNetworkReply::errorOccurred,
+                    [reply, this]()
             {
-                qDebug() << "ERROR:" << reply->errorString();
-            }
-        });
-
-        connect(reply, &QNetworkReply::finished,
-                [reply, group, this]()
-        {
-            QString uploadUrl;
-            QJsonParseError parseError;
-            const auto data = reply->readAll();
-            const auto document = QJsonDocument::fromJson(data, &parseError);
-            QJsonObject serverInfo = document.object().value("response").toObject();
-
-            uploadUrl = serverInfo["upload_url"].toString();
-
-            for (std::size_t i = 0; i < mPhotoPaths.size(); i++)
-            {
-                QEventLoop loop;
-                connect(this, &Fetcher::updatedPhoto, &loop, &QEventLoop::quit);
-                QTimer::singleShot(500,
-                                   [this, i, group, uploadUrl]()
+                if (reply->error() != QNetworkReply::NoError)
                 {
-                    QFile *file = new QFile(mPhotoPaths.at(i));
+                    qCritical() << "vkApi.photos.getWallUploadServer error:" << reply->errorString();
+                    emit errorMessageSend("ERROR: " + reply->errorString());
+                    reply->deleteLater();
+                    throw "vkApi.photos.getWallUploadServer";
+                }
 
-                    if (!file->open(QIODevice::ReadOnly))
-                        qDebug() << "File could not be opened";
+            });
 
-                    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+            connect(reply, &QNetworkReply::finished,
+                    [reply, group, loop, this]()
+            {
+                QString uploadUrl;
+                QJsonParseError parseError;
+                const auto data = reply->readAll();
+                const auto document = QJsonDocument::fromJson(data, &parseError);
 
-                    QHttpPart imagePart;
-                    imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/gif, image/jpg, image/jpeg, image/png"));
-                    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
-                                                                                            "name=\"photo\"; "
-                                                                                            "filename=\"" + file->fileName() + "\""));
-                    imagePart.setBodyDevice(file);
-                    file->setParent(multiPart);
+                const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
 
-                    multiPart->append(imagePart);
+                if (QJsonParseError::NoError != parseError.error)
+                {
+                    qCritical() << "error reply vkApi.photos.getWallUploadServer finished:"
+                                << parseError.errorString() << " | " << group.name << group.vkid << "|";
+                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                    reply->deleteLater();
+                    throw "vkApi.photos.getWallUploadServer";
+                }
 
-                    QNetworkRequest uploadUrlRequest;
-                    uploadUrlRequest.setUrl(QUrl(uploadUrl));
-                    QNetworkReply *transferReply = mNetworkManager->post(uploadUrlRequest, multiPart);
-                    multiPart->setParent(transferReply);
-                    connect(transferReply, &QNetworkReply::finished,
-                            [transferReply, group, this]()
+                if (!jsonServerErrorObject.isEmpty())
+                {
+                    qCritical() << "vkApi.photos.getWallUploadServer - server error:"
+                                << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
+                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                    reply->deleteLater();
+                    throw "vkApi.photos.getWallUploadServer";
+                }
+
+                QJsonObject serverInfo = document.object().value("response").toObject();
+
+                qDebug() << "vkApi.photos.getWallUploadServer" << serverInfo;
+
+                uploadUrl = serverInfo["upload_url"].toString();
+
+                for (std::size_t i = 0; i < mPhotoPaths.size(); i++)
+                {
+
+                    QTimer::singleShot(500,
+                                       [this, i, group, uploadUrl, reply]()
                     {
-                        QTimer::singleShot(500,
-                                           [transferReply, group, this]()
+                        QFile *file = new QFile(mPhotoPaths.at(i));
+
+                        if (!file->open(QIODevice::ReadOnly))
                         {
-                            //!обработка ошибок reply
-                            QJsonParseError parseError;
-                            const auto data = transferReply->readAll();
-                            const auto document = QJsonDocument::fromJson(data, &parseError);
-                            const QJsonObject jsonResponse = document.object();
+                            qCritical() << "File could not be opened:" << mPhotoPaths.at(i);
+                            emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                            reply->deleteLater();
+                            throw "File could not be opened";
+                        }
 
-                            QUrl requestUrl(mVkApiLink
-                                            + vkApi.photos.saveWallPhoto.method + "?"
-                                            );
+                        QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
-                            QUrlQuery params;
-                            params.addQueryItem("access_token",vkApi.authorizationAccessToken);
-                            params.addQueryItem("v", vkApi.apiVersion);
-                            params.addQueryItem("group_id", group.vkid);
-                            params.addQueryItem("hash", jsonResponse["hash"].toString());
-                            params.addQueryItem("server", QString::number(jsonResponse["server"].toInt()));
-                            params.addQueryItem("photo", jsonResponse["photo"].toString().toUtf8());
+                        QHttpPart imagePart;
+                        imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/gif, image/jpg, image/jpeg, image/png"));
+                        imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
+                                                                                                "name=\"photo\"; "
+                                                                                                "filename=\"" + file->fileName() + "\""));
+                        imagePart.setBodyDevice(file);
+                        file->setParent(multiPart);
 
-                            QNetworkRequest request;
-                            request.setUrl(requestUrl);
+                        multiPart->append(imagePart);
 
-                            QNetworkReply *newReply = mNetworkManager->post(request, params.query().toUtf8());
-                            connect(newReply, &QNetworkReply::finished,
-                                    [newReply, this]()
+                        QNetworkRequest uploadUrlRequest;
+                        uploadUrlRequest.setUrl(QUrl(uploadUrl));
+                        QNetworkReply *transferReply = mNetworkManager->post(uploadUrlRequest, multiPart);
+
+                        connect(transferReply, &QNetworkReply::errorOccurred,
+                                [transferReply, this]()
+                        {
+                            if (transferReply->error() != QNetworkReply::NoError)
                             {
-                                QJsonParseError parseError;
-                                const auto data = newReply->readAll();
-                                const auto document = QJsonDocument::fromJson(data, &parseError);
-                                const QJsonObject jsonResponse = document.object()["response"].toArray()[0].toObject();
-                                qDebug() << "saveWallPhoto" << document.object()["response"].toArray();
-                                qDebug() << "=========================================";
-                                QUrl requestUrl(mVkApiLink
-                                                + vkApi.wallPost.method + "?"
-                                                 );
+                                qCritical() << "vkApi.photos.getWallUploadServer error:" << transferReply->errorString();
+                                emit errorMessageSend("ERROR: " + transferReply->errorString());
+                                transferReply->deleteLater();
+                                throw "vkApi.photos.getWallUploadServer";
+                            }
 
-                                vkApi.wallPost.attachments += "photo" + QString::number(jsonResponse["owner_id"].toInt()) +
-                                        "_" + QString::number(jsonResponse["id"].toInt()) + ",";
-
-                                emit updatedPhoto();
-
-                                newReply->deleteLater();
-                            });
-
-                            transferReply->deleteLater();
                         });
+
+                        multiPart->setParent(transferReply);
+                        connect(transferReply, &QNetworkReply::finished,
+                                [transferReply, group, this]()
+                        {
+                            QTimer::singleShot(500,
+                                               [transferReply, group, this]()
+                            {
+                                //!обработка ошибок reply
+                                QJsonParseError parseError;
+                                const auto data = transferReply->readAll();
+                                const auto document = QJsonDocument::fromJson(data, &parseError);
+
+                                const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+                                if (QJsonParseError::NoError != parseError.error)
+                                {
+                                    qCritical() << "error reply uploadUrlRequest finished:"
+                                                << parseError.errorString() << " | " << group.name << group.vkid << "|";
+                                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                                    transferReply->deleteLater();
+                                    throw "uploadUrlRequest";
+                                }
+
+                                if (!jsonServerErrorObject.isEmpty())
+                                {
+                                    qCritical() << "uploadUrlRequest - server error:"
+                                                << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
+                                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                                    transferReply->deleteLater();
+                                    throw "uploadUrlRequest";
+                                }
+
+                                const QJsonObject jsonResponse = document.object();
+
+                                qDebug() << "vkApi.photos.saveWallPhoto" << jsonResponse;
+
+                                QUrl requestUrl(mVkApiLink
+                                                + vkApi.photos.saveWallPhoto.method + "?"
+                                                );
+
+                                QUrlQuery params;
+                                params.addQueryItem("access_token",vkApi.authorizationAccessToken);
+                                params.addQueryItem("v", vkApi.apiVersion);
+                                params.addQueryItem("group_id", group.vkid);
+                                params.addQueryItem("hash", jsonResponse["hash"].toString());
+                                params.addQueryItem("server", QString::number(jsonResponse["server"].toInt()));
+                                params.addQueryItem("photo", jsonResponse["photo"].toString().toUtf8());
+
+                                QNetworkRequest request;
+                                request.setUrl(requestUrl);
+
+                                QNetworkReply *newReply = mNetworkManager->post(request, params.query().toUtf8());
+
+                                connect(newReply, &QNetworkReply::errorOccurred,
+                                        [newReply, this]()
+                                {
+                                    if (newReply->error() != QNetworkReply::NoError)
+                                    {
+                                        qCritical() << "uploadUrlRequest error:" << newReply->errorString();
+                                        emit errorMessageSend("ERROR: " + newReply->errorString());
+                                        newReply->deleteLater();
+                                        throw "uploadUrlRequest";
+                                    }
+
+                                });
+
+                                connect(newReply, &QNetworkReply::finished,
+                                        [newReply, group, this]()
+                                {
+                                    QJsonParseError parseError;
+                                    const auto data = newReply->readAll();
+                                    const auto document = QJsonDocument::fromJson(data, &parseError);
+
+                                    const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+                                    if (QJsonParseError::NoError != parseError.error)
+                                    {
+                                        qCritical() << "error reply vkApi.photos.saveWallPhoto finished:"
+                                                    << parseError.errorString() << " | " << group.name << group.vkid << "|";
+                                        emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                                        newReply->deleteLater();
+                                        throw "vkApi.photos.saveWallPhoto";
+                                    }
+
+                                    if (!jsonServerErrorObject.isEmpty())
+                                    {
+                                        qCritical() << "vkApi.photos.saveWallPhoto - server error:"
+                                                    << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
+                                        emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                                        newReply->deleteLater();
+                                        throw "vkApi.photos.saveWallPhoto";
+                                    }
+
+                                    const QJsonObject jsonResponse = document.object()["response"].toArray()[0].toObject();
+                                    qDebug() << "saveWallPhoto" << jsonResponse;
+                                    QUrl requestUrl(mVkApiLink
+                                                    + vkApi.wallPost.method + "?"
+                                                     );
+
+                                    vkApi.wallPost.attachments += "photo" + QString::number(jsonResponse["owner_id"].toInt()) +
+                                            "_" + QString::number(jsonResponse["id"].toInt()) + ",";
+
+                                    emit updatedPhoto();
+
+                                    newReply->deleteLater();
+                                });
+
+                                transferReply->deleteLater();
+                            });
+                        });
+
+                    });
+
+                    loop->exec();
+                }
+
+                QTimer::singleShot(500,
+                                   [this, group]()
+                {
+                    QUrl requestUrl(mVkApiLink
+                                    + vkApi.wallPost.method + "?"
+                                     );
+
+                    QUrlQuery params;
+                    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
+                    params.addQueryItem("v", vkApi.apiVersion);
+                    params.addQueryItem("message", vkApi.wallPost.message);
+                    params.addQueryItem("owner_id", "-" + group.vkid);
+                    params.addQueryItem("attachments", vkApi.wallPost.attachments);
+                    requestUrl.setQuery(params.query());
+
+                    QNetworkRequest request;
+                    request.setUrl(requestUrl);
+
+                    QNetworkReply *wallPostReply = mNetworkManager->get(request);
+
+                    connect(wallPostReply, &QNetworkReply::errorOccurred,
+                            [wallPostReply, this]()
+                    {
+                        if (wallPostReply->error() != QNetworkReply::NoError)
+                        {
+                            qCritical() << "vkApi.wallPost error:" << wallPostReply->errorString();
+                            emit errorMessageSend("ERROR: " + wallPostReply->errorString());
+                            wallPostReply->deleteLater();
+                            throw "vkApi.wallPost";
+                        }
+
+                    });
+
+                    connect(wallPostReply, &QNetworkReply::finished,
+                            [wallPostReply, group, this]()
+                    {
+                        QJsonParseError parseError;
+                        const auto data = wallPostReply->readAll();
+                        const auto document = QJsonDocument::fromJson(data, &parseError);
+
+                        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+                        if (QJsonParseError::NoError != parseError.error)
+                        {
+                            qCritical() << "reply vkApi.photos.saveWallPhoto finished:"
+                                        << parseError.errorString() << " | " << group.name << group.vkid << "|";
+                            emit errorMessageSend("Не удалось отправить пост для " + group.name);
+                            wallPostReply->deleteLater();
+                            throw "vkApi.photos.saveWallPhoto";
+                        }
+
+                        if (!jsonServerErrorObject.isEmpty())
+                        {
+                            qCritical() << "vkApi.photos.saveWallPhoto - server error:"
+                                        << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
+                            emit errorMessageSend("Не удалось отправить пост для " + group.name);
+                            wallPostReply->deleteLater();
+                            throw "vkApi.photos.saveWallPhoto";
+                        }
+
+                        qDebug() << "wall post: " << wallPostReply->readAll();
+                        emit sentMessage(group);
+                        wallPostReply->deleteLater();
                     });
 
                 });
 
-                loop.exec();
-            }
-
-            QTimer::singleShot(500,
-                               [this, group]()
-            {
-                QUrl requestUrl(mVkApiLink
-                                + vkApi.wallPost.method + "?"
-                                 );
-
-                QUrlQuery params;
-                params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
-                params.addQueryItem("v", vkApi.apiVersion);
-                params.addQueryItem("message", vkApi.wallPost.message);
-                params.addQueryItem("owner_id", "-" + group.vkid);
-                params.addQueryItem("attachments", vkApi.wallPost.attachments);
-                requestUrl.setQuery(params.query());
-
-                QNetworkRequest request;
-                request.setUrl(requestUrl);
-                //обработать ошибку
-                QNetworkReply *wallPostReply = mNetworkManager->get(request);
-                connect(wallPostReply, &QNetworkReply::finished,
-                        [wallPostReply, group, this]()
-                {
-                    qDebug() << "wall post" << wallPostReply->url() << " "
-                             << wallPostReply->error() << " "
-                             << wallPostReply->readAll();
-                    qDebug() << "=========================================";
-                    emit sentMessage(group, true);
-                    wallPostReply->deleteLater();
-                });
-
+                reply->deleteLater();
             });
 
-            reply->deleteLater();
-        });
-
-        groupLoop.exec();
+            groupLoop->exec();
+        }
+        catch (...)
+        {
+            groupLoop->quit();
+            loop->quit();
+            continue;
+        }
     }
 }
 

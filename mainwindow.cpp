@@ -78,6 +78,7 @@ void MainWindow::onAddNewPhotoButtonReleased()
 
 void MainWindow::onDeleteSelectedPhotosReleased()
 {
+    qDebug() << "delete selected photos";
     QList<QListWidgetItem *> selectedItems = ui->photosListWidget->selectedItems();
     for (QListWidgetItem *item : selectedItems)
         for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); it++)
@@ -105,13 +106,14 @@ void MainWindow::onPhotosListWidgetDoubleClicked(const QModelIndex& index)
 
 void MainWindow::onSendButtonReleased()
 {
-
+    qDebug() << "on send button released";
     std::vector<Path> photoPaths;
     for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); it++)
         photoPaths.push_back(it->first);
 
-    if ((ui->messageEdit->toPlainText() == "") || (photoPaths.size() == 0))
+    if (ui->messageEdit->toPlainText().isEmpty() && photoPaths.empty())
     {
+        qDebug() << ui->messageEdit->toPlainText();
         QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
         return;
     }
@@ -145,6 +147,8 @@ void MainWindow::onGroupDataUpdated()
         item->setSizeHint( groupFrame->sizeHint() );
         ui->groupList->setItemWidget( item, groupFrame );
     }
+    qDebug() << "group data updated";
+
 }
 
 void MainWindow::onEditListButtonReleased()

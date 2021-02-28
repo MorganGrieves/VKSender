@@ -28,28 +28,36 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
     });
 
     connect(mFetcher.get(), &Fetcher::sentMessage,
-            [this](Group group, bool success){
+            [this](Group group){
         ui->progressBar->setValue(ui->progressBar->value() + 1);
 
-        if (success)
             ui->resultLabel->setText(ui->resultLabel->text()
                                      + QString("<p style=\"font-weight: 600; color: green;\">"
                                                "Пост в %1 успешно опубликован."
                                                "</p>").arg(group.name));
-        else
-            ui->resultLabel->setText(ui->resultLabel->text()
-                                     + QString("<p style=\"font-weight: 600; color: green;\">"
-                                               "Пост в %1 не удалось опубликовать."
-                                               "</p>").arg(group.name));
         sentMessages++;
 
-        if (sentMessages == mRepository->getGroupData().size())\
+        if (sentMessages == mRepository->getGroupData().size())
+        {
+            qDebug() << "Sending was finished.";
             ui->resultLabel->setText(ui->resultLabel->text()
                                      + "<p>"
                                        "Рассылка завершена."
                                         "</p>");
+            sentMessages = 0;
+        }
+
     });
 
+    connect(mFetcher.get(), &Fetcher::errorMessageSend,
+            [this](QString err)
+    {
+
+        ui->resultLabel->setText(ui->resultLabel->text()
+                                 + QString("<p style=\"font-weight: 600; color: red;\">"
+                                           + err
+                                           + "</p>"));
+    });
 
     connect(this, &SendingProgress::messageSent,
             mFetcher.get(), &Fetcher::onMessageSent);

@@ -19,22 +19,30 @@ GroupTableEdit::GroupTableEdit(QWidget *parent) :
             {
                 ui->linksBeforeSendList->clear();
                 mGroup.clear();
+                qDebug() << "all items were deleted";
             });
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [=]()
     {
+        qDebug() << "QDialogButtonBox accepted";
         mRepository->setGroupData(mGroup);
         this->close();
     });
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, [=]()
     {
+        qDebug() << "QDialogButtonBox rejected";
         this->close();
     });
-    connect(ui->linksBeforeSendList, &QListWidget::itemDoubleClicked, [this](QListWidgetItem *item)
+    connect(ui->linksBeforeSendList, &QListWidget::itemDoubleClicked,
+            [this](QListWidgetItem *item)
     {
-        //!Удаление элемента
-        //QFrame groupFrame = qobject_cast<QFrame>(item->data(0).value());
-
+//        std::for_each(mGroup.begin(), mGroup.end(),
+//                      [item](Group *group)
+//        {
+//            if (group.vkid == item->findChild<QLineEdit *>())
+//                delete group;
+//        });
         delete item;
+        qDebug() << "item was deleted";
     });
 }
 
@@ -89,6 +97,8 @@ void GroupTableEdit::addGroupFrame(Group group)
     QListWidgetItem* item = new QListWidgetItem( ui->linksBeforeSendList );
     item->setSizeHint( groupFrame->sizeHint() );
     ui->linksBeforeSendList->setItemWidget( item, groupFrame );
+
+    qDebug() << "groupFrame was added";
 }
 
 void GroupTableEdit::onAddLinkButtonReleased()
