@@ -12,35 +12,44 @@ GroupTableEdit::GroupTableEdit(QWidget *parent) :
 
     connect(ui->addLinkButton, &QPushButton::released,
             this, &GroupTableEdit::onAddLinkButtonReleased);
+
     connect(ui->sendGroupListButton, &QPushButton::released,
             this, &GroupTableEdit::onSendButtonReleased);
+
     connect(ui->deleteAllLinkButton, &QPushButton::released,
             [this]()
             {
                 ui->linksBeforeSendList->clear();
-                mGroup.clear();
+                mGroups.clear();
                 qDebug() << "all items were deleted";
             });
+
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [=]()
     {
         qDebug() << "QDialogButtonBox accepted";
-        mRepository->setGroupData(mGroup);
+        mRepository->setGroupData(mGroups);
         this->close();
     });
+
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, [=]()
     {
         qDebug() << "QDialogButtonBox rejected";
         this->close();
     });
+
     connect(ui->linksBeforeSendList, &QListWidget::itemDoubleClicked,
             [this](QListWidgetItem *item)
     {
-//        std::for_each(mGroup.begin(), mGroup.end(),
-//                      [item](Group *group)
-//        {
-//            if (group.vkid == item->findChild<QLineEdit *>())
-//                delete group;
-//        });
+        qDebug() << ui->linksBeforeSendList->itemWidget(item)->findChild<QLineEdit *>()->text();
+        mGroups.erase(std::remove_if(mGroups.begin(), mGroups.end(),
+                                  [this, item](Group group)
+        {
+                          return ui->linksBeforeSendList->itemWidget(item)->findChild<QLineEdit *>()->text()
+                                  == group.vkid;
+
+                      }),
+                   mGroups.end()
+                );
         delete item;
         qDebug() << "item was deleted";
     });
@@ -52,7 +61,6 @@ void GroupTableEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 
     connect(this, &GroupTableEdit::sendGroupLinks,
             mFetcher.get(), &Fetcher::onGroupDataNeed);
-
 }
 
 void GroupTableEdit::setRepository(const std::shared_ptr<Repository> repository)
@@ -117,9 +125,9 @@ void GroupTableEdit::onSendButtonReleased()
     emit sendGroupLinks(groupLinks);
 }
 
-void GroupTableEdit::onGroupVectorReceived(const std::vector<Group> groups)
+void GroupTableEdit::onGroupVectorReceived(const QVector<Group> groups)
 {
-    mGroup.clear();
+    mGroups.clear();
     const auto links = ui->linksBeforeSendList->findChildren<QLineEdit *>();
 
     for (const auto &link : links)
@@ -129,7 +137,7 @@ void GroupTableEdit::onGroupVectorReceived(const std::vector<Group> groups)
             if (link->text() == group.link || link->text() == group.vkid)
             {
                 groupFrame->setStyleSheet("background-color: green;");
-                mGroup.push_back(group);
+                mGroups.push_back(group);
 
                 groupFrame->findChild<QLabel*>("groupNameLabel")->setText(group.name);
             }

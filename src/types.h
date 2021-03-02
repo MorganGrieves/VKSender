@@ -1,13 +1,15 @@
 #ifndef TYPES_H
 #define TYPES_H
+
 #include <QString>
+
 using Path = QString;
 
-using Id = std::size_t;
+using Id = quint64;
 using GroupId = QString;
 using Name = QString;
 using Link = QString;
-using Members = unsigned int;
+using Members = quint64;
 
 struct Group
 {
@@ -18,5 +20,8 @@ struct Group
     Link photo = "";
     Members membersCount = 0;
 };
+
+QDataStream &operator<<(QDataStream &, const Group &);
+QDataStream &operator>>(QDataStream &, Group &);
 
 #endif // TYPES_H

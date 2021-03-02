@@ -2,12 +2,14 @@
 #define GROUPTABLEEDIT_H
 
 #include <QDialog>
+#include <QVector>
 
 #include "repository.h"
 #include "fetcher.h"
 #include "types.h"
 
-namespace Ui {
+namespace Ui
+{
 class GroupTableEdit;
 }
 
@@ -25,7 +27,7 @@ signals:
     void sendGroupLinks(std::vector<Link> links);
 
 public slots:
-    void onGroupVectorReceived(const std::vector<Group> groups);
+    void onGroupVectorReceived(const QVector<Group> groups);
 
 private slots:
     void onSendButtonReleased();
@@ -41,7 +43,7 @@ private:
     std::shared_ptr<Repository> mRepository = nullptr;
     std::shared_ptr<Fetcher> mFetcher = nullptr;
 
-    std::vector<Group> mGroup;
+    QVector<Group> mGroups;
 };
 
 #endif // GROUPTABLEEDIT_H

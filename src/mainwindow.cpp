@@ -11,6 +11,7 @@
 #include <QListWidgetItem>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QAction>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -51,6 +52,42 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->photosListWidget, &QListWidget::doubleClicked,
             this, &MainWindow::onPhotosListWidgetDoubleClicked);
+
+    connect(ui->openAction, &QAction::triggered,
+            [this](bool)
+    {
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "VKSender", "Сохранить список групп?",
+                                      QMessageBox::Yes|QMessageBox::No);
+        if (reply == QMessageBox::Yes)
+        {
+            QString saveFileName = QFileDialog::getSaveFileName(0, "Сохранить", "",
+                                                        tr("VKSender Files (*.vks)"));
+            if (!saveFileName.isEmpty())
+                mRepository->serialize(saveFileName);
+
+            QString openFileName = QFileDialog::getOpenFileName(0, "Открыть", "",
+                                                        tr("VKSender Files (*.vks)"));
+            if (!openFileName.isEmpty())
+                mRepository->deserialize(openFileName);
+        }
+        else
+        {
+            QString openFileName = QFileDialog::getOpenFileName(0, "Открыть", "",
+                                                        tr("VKSender Files (*.vks)"));
+            if (!openFileName.isEmpty())
+                mRepository->deserialize(openFileName);
+        }
+    });
+
+    connect(ui->saveAction, &QAction::triggered,
+            [this](bool)
+    {
+        QString saveFileName = QFileDialog::getSaveFileName(0, "Сохранить", "",
+                                                    tr("VKSender Files (*.vks)"));
+        if (!saveFileName.isEmpty())
+            mRepository->serialize(saveFileName);
+    });
 }
 
 void MainWindow::onAddNewPhotoButtonReleased()
@@ -61,19 +98,22 @@ void MainWindow::onAddNewPhotoButtonReleased()
         return;
     }
 
-    QString name = QFileDialog::getOpenFileName(0, "Открыть", "",
+    QString openImageName = QFileDialog::getOpenFileName(0, "Открыть", "",
                                                 tr("Image Files (*.png *.jpg *.jpeg *.gif);;"
                                                    "All files (*.*)"));
-    if (mPhotoPaths.find(name) != mPhotoPaths.end())
+    if (openImageName.isEmpty())
+        return;
+
+    if (mPhotoPaths.find(openImageName) != mPhotoPaths.end())
     {
         QMessageBox::warning(this, tr("VK Sender"), tr("Данное изображение уже добавлено в список."));
         return;
     }
 
     QListWidgetItem* listItem = new QListWidgetItem();
-    listItem->setIcon(QPixmap(name));
+    listItem->setIcon(QPixmap(openImageName));
     ui->photosListWidget->addItem(listItem);
-    mPhotoPaths[name] = listItem;
+    mPhotoPaths[openImageName] = listItem;
 }
 
 void MainWindow::onDeleteSelectedPhotosReleased()

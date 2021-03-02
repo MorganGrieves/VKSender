@@ -1,6 +1,3 @@
-#include "fetcher.h"
-#include <types.h>
-
 #include <iostream>
 
 #include <QCoreApplication>
@@ -24,6 +21,8 @@
 #include <QHttpMultiPart>
 #include <QMessageBox>
 #include <QMessageLogger>
+
+#include "fetcher.h"
 
 static Request vkApi;
 
@@ -96,7 +95,7 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
         const QJsonArray jsonResponse = document.object()["response"].toArray();
         qDebug() << jsonResponse;
 
-        std::vector<Group> groups;
+        QVector<Group> groups;
         Id id = 0;
         foreach (const QJsonValue &value, jsonResponse)
         {

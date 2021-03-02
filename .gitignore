@@ -15,6 +15,7 @@
 *_pch.h.cpp
 *_resource.rc
 *.qm
+*.user
 .#*
 *.*#
 core
@@ -70,4 +71,8 @@ Thumbs.db
 # --------
 *.dll
 *.exe
+
+# generated folders
+# --------
+build/
 

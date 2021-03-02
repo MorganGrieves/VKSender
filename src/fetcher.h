@@ -1,7 +1,6 @@
 #ifndef FETCHER_H
 #define FETCHER_H
 
-#include <vector>
 #include <string>
 
 #include <QObject>
@@ -11,8 +10,9 @@
 #include <QString>
 #include <QNetworkReply>
 #include <QEventLoop>
+#include <QVector>
 
-#include <types.h>
+#include "types.h"
 #include "repository.h"
 
 struct Request
@@ -75,7 +75,7 @@ public:
     void setRepository(const std::shared_ptr<Repository> repository);
 
 signals:
-    void updatedGroupData(std::vector<Group> groups);
+    void updatedGroupData(QVector<Group> groups);
     void updatedPhoto();
     void sentMessage(Group group);
 

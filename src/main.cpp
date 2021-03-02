@@ -90,7 +90,6 @@ int main(int argc, char *argv[])
     }
 
     qInfo() << "Application closed";
-    qInfo() << "============================================";
 
     return 0;
 }
