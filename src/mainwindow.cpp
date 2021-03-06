@@ -5,8 +5,6 @@
 #include <QFrame>
 #include <QGridLayout>
 #include <QPushButton>
-#include <QPainter>
-#include <QEventLoop>
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QFileDialog>
@@ -19,10 +17,26 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    //QCoreApplication::setOrganizationName("Organization");
+    //QCoreApplication::setApplicationName("FVSender");
+
     mRepository = std::make_shared<Repository>();
     mFetcher = std::make_shared<Fetcher>();
     mGroupTableEdit = std::make_shared<GroupTableEdit>(this);
     mSendingProgress = std::make_shared<SendingProgress>(this);
+
+    if (mFetcher->tokenIsEmpty())
+    {
+        mGreetingWidget = std::make_shared<GreetingWidget>(this);
+        mGreetingWidget->move(geometry().center() - mGreetingWidget->geometry().center());
+        mGreetingWidget->show();
+        connect(mGreetingWidget.get(), &GreetingWidget::accessTokenReceived,
+                [this](QString token)
+        {
+            mGreetingWidget->close();
+            mFetcher->setAccessToken(token);
+        });
+    }
 
     mFetcher->setRepository(mRepository);
 
@@ -88,6 +102,13 @@ MainWindow::MainWindow(QWidget *parent)
         if (!saveFileName.isEmpty())
             mRepository->serialize(saveFileName);
     });
+
+    connect(ui->exitAction, &QAction::triggered,
+            [this](bool)
+    {
+        qApp->quit();
+    });
+
 }
 
 void MainWindow::onAddNewPhotoButtonReleased()
@@ -114,6 +135,7 @@ void MainWindow::onAddNewPhotoButtonReleased()
     listItem->setIcon(QPixmap(openImageName));
     ui->photosListWidget->addItem(listItem);
     mPhotoPaths[openImageName] = listItem;
+    qDebug() << "A new photo was added. mPhotoPaths.size =" << mPhotoPaths.size();
 }
 
 void MainWindow::onDeleteSelectedPhotosReleased()
@@ -121,12 +143,15 @@ void MainWindow::onDeleteSelectedPhotosReleased()
     qDebug() << "delete selected photos";
     QList<QListWidgetItem *> selectedItems = ui->photosListWidget->selectedItems();
     for (QListWidgetItem *item : selectedItems)
-        for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); it++)
+        for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end();)
             if (it->second == item)
             {
                 delete item;
-                mPhotoPaths.erase(it);
+                it = mPhotoPaths.erase(it);
             }
+            else
+                it++;
+    qDebug() << "A photo was deleted. mPhotoPaths.size =" << mPhotoPaths.size();
 }
 
 void MainWindow::onPhotosListWidgetDoubleClicked(const QModelIndex& index)
@@ -153,8 +178,13 @@ void MainWindow::onSendButtonReleased()
 
     if (ui->messageEdit->toPlainText().isEmpty() && photoPaths.empty())
     {
-        qDebug() << ui->messageEdit->toPlainText();
         QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
+        return;
+    }
+
+    if (mRepository->getGroupData().isEmpty())
+    {
+        QMessageBox::warning(this, tr("VK Sender"), tr("Список групп пуст."));
         return;
     }
 

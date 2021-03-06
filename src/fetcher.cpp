@@ -1,11 +1,6 @@
-#include <iostream>
-
 #include <QCoreApplication>
-#include <QTextStream>
-#include <QVariant>
 #include <QDir>
 #include <QFileInfo>
-#include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QUrl>
@@ -14,13 +9,14 @@
 #include <QtGui>
 #include <QtCore>
 #include <QtWidgets>
-#include <QDateTime>
 #include <QEventLoop>
 #include <QTimer>
 #include <QHttpPart>
 #include <QHttpMultiPart>
 #include <QMessageBox>
-#include <QMessageLogger>
+
+#define ORGANIZATION_NAME "Organization Name"
+#define APPLICATION_NAME "VKSender"
 
 #include "fetcher.h"
 
@@ -29,11 +25,20 @@ static Request vkApi;
 Fetcher::Fetcher(QObject *parent) : QObject(parent)
 {
     mNetworkManager = new QNetworkAccessManager(this);
+
+
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    vkApi.implicitFlowAccessToken = settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString();
 }
 
 void Fetcher::setRepository(const std::shared_ptr<Repository> repository)
 {
     mRepository = repository;
+}
+
+bool Fetcher::tokenIsEmpty() const
+{
+    return (vkApi.implicitFlowAccessToken == "");
 }
 
 void Fetcher::onGroupDataNeed(const std::vector<Link> links)
@@ -46,7 +51,7 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
                     + vkApi.groupById.method);
 
     QUrlQuery params;
-    params.addQueryItem("access_token", vkApi.authorizationAccessToken);
+    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
     params.addQueryItem("v", vkApi.apiVersion);
     params.addQueryItem("fields", vkApi.groupById.fields);
     params.addQueryItem("group_ids", vkApi.groupById.groupIds);
@@ -138,7 +143,7 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                             + vkApi.photos.getWallUploadServer.method
                             );
             QUrlQuery params;
-            params.addQueryItem("access_token", vkApi.authorizationAccessToken);
+            params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
             params.addQueryItem("v", vkApi.apiVersion);
             params.addQueryItem("group_id", group.vkid);
             getWallUpdateRequestUrl.setQuery(params);
@@ -281,7 +286,7 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                                 );
 
                                 QUrlQuery params;
-                                params.addQueryItem("access_token",vkApi.authorizationAccessToken);
+                                params.addQueryItem("access_token",vkApi.implicitFlowAccessToken);
                                 params.addQueryItem("v", vkApi.apiVersion);
                                 params.addQueryItem("group_id", group.vkid);
                                 params.addQueryItem("hash", jsonResponse["hash"].toString());
@@ -437,6 +442,13 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
     }
 }
 
+void Fetcher::setAccessToken(QString token)
+{
+    vkApi.implicitFlowAccessToken = token;
+}
+
 Fetcher::~Fetcher()
 {
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
 }

@@ -10,7 +10,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 file (GLOB_RECURSE SOURCES "*.cpp")
 file (GLOB_RECURSE HEADERS "*.h")
 file (GLOB_RECURSE UI "*.ui")
-file (GLOB_RECURSE RESOURCE "*.qrc")
+file (GLOB_RECURSE RESOURCE "*.qrc" "*.rc")
+
+
 
 add_executable(VKSender ${HEADERS} ${SOURCES} ${UI} ${RESOURCE})
 
@@ -23,4 +25,6 @@ target_link_libraries(
     Qt5::Core
     Qt5::Gui
     Qt5::NetworkAuth
+    Qt5::WebKitWidgets
+    Qt5::WebKit
     )

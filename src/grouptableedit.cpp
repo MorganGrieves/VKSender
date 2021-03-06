@@ -3,6 +3,7 @@
 
 #include <QLineEdit>
 #include <QObject>
+#include <QRegExp>
 
 GroupTableEdit::GroupTableEdit(QWidget *parent) :
     QDialog(parent),
@@ -44,7 +45,11 @@ GroupTableEdit::GroupTableEdit(QWidget *parent) :
         mGroups.erase(std::remove_if(mGroups.begin(), mGroups.end(),
                                   [this, item](Group group)
         {
-                          return ui->linksBeforeSendList->itemWidget(item)->findChild<QLineEdit *>()->text()
+                          return filterGroupLineEdit(ui
+                                                     ->linksBeforeSendList
+                                                     ->itemWidget(item)
+                                                     ->findChild<QLineEdit *>()
+                                                     ->text())
                                   == group.vkid;
 
                       }),
@@ -66,7 +71,6 @@ void GroupTableEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 void GroupTableEdit::setRepository(const std::shared_ptr<Repository> repository)
 {
     mRepository = repository;
-
     for (const auto &group : mRepository->getGroupData())
         addGroupFrame(group);
 }
@@ -109,6 +113,19 @@ void GroupTableEdit::addGroupFrame(Group group)
     qDebug() << "groupFrame was added";
 }
 
+QString GroupTableEdit::filterGroupLineEdit(const QString &text)
+{
+    QRegExp reg("(\\b(public|club)[\\d]+$)");
+    if (reg.indexIn(text) != -1)
+    {
+        QRegExp reg1("[\\d]+");
+        reg1.indexIn(reg.cap(0));
+        return reg1.cap(0);
+    }
+
+    return text;
+}
+
 void GroupTableEdit::onAddLinkButtonReleased()
 {
     addGroupFrame();
@@ -119,7 +136,8 @@ void GroupTableEdit::onSendButtonReleased()
     std::vector<Link> groupLinks;
     const auto links = ui->linksBeforeSendList->findChildren<QLineEdit *>();
     for (const auto &link : links)
-        groupLinks.push_back(link->text());
+        groupLinks.push_back(filterGroupLineEdit(link->text()));
+
     connect (mFetcher.get(), &Fetcher::updatedGroupData,
              this, &GroupTableEdit::onGroupVectorReceived);
     emit sendGroupLinks(groupLinks);
@@ -134,7 +152,9 @@ void GroupTableEdit::onGroupVectorReceived(const QVector<Group> groups)
         for (const auto &group : groups)
         {
             QFrame *groupFrame = qobject_cast< QFrame* >(link->parent());
-            if (link->text() == group.link || link->text() == group.vkid)
+
+            if (link->text() == group.link
+                    || filterGroupLineEdit(link->text()) == group.vkid)
             {
                 groupFrame->setStyleSheet("background-color: green;");
                 mGroups.push_back(group);

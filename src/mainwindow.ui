@@ -571,6 +571,8 @@ QPushButton:hover{
     </property>
     <addaction name="openAction"/>
     <addaction name="saveAction"/>
+    <addaction name="separator"/>
+    <addaction name="exitAction"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -587,6 +589,11 @@ QPushButton:hover{
   <action name="saveAction">
    <property name="text">
     <string>Сохранить</string>
+   </property>
+  </action>
+  <action name="exitAction">
+   <property name="text">
+    <string>Выход</string>
    </property>
   </action>
  </widget>

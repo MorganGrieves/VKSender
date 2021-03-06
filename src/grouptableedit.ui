@@ -131,13 +131,6 @@ color:white;
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
-             <widget class="QLineEdit" name="lineEdit">
-              <property name="placeholderText">
-               <string>Введите access_token для отправки</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QFrame" name="frame">
               <property name="styleSheet">
                <string notr="true">background-color: white;
@@ -323,7 +316,6 @@ QPushButton:hover{
            <zorder>buttonBox</zorder>
            <zorder>linksFrame</zorder>
            <zorder>frame</zorder>
-           <zorder>lineEdit</zorder>
           </widget>
          </item>
         </layout>

@@ -20,6 +20,7 @@ class GroupTableEdit : public QDialog
 public:
     explicit GroupTableEdit(QWidget *parent = nullptr);
     ~GroupTableEdit();
+
     void setRepository(const std::shared_ptr<Repository> repository);
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
 
@@ -36,6 +37,7 @@ private slots:
 private:
     void updateGroupsList();
     void addGroupFrame(Group group = Group());
+    QString filterGroupLineEdit(const QString &text);
 
 private:
     Ui::GroupTableEdit *ui;

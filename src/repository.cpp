@@ -11,40 +11,40 @@
 
 Repository::Repository()
 {
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-    int size = settings.beginReadArray("mGroups");
-    for (int i = 0; i < size; ++i)
-    {
-        settings.setArrayIndex(i);
-        Group group;
-        group.id = settings.value("id").toULongLong();
-        group.vkid = settings.value("vkid").toString();
-        group.name = settings.value("name").toString();
-        group.link = settings.value("link").toString();
-        group.photo = settings.value("photo").toString();
-        group.membersCount = settings.value("membersCount").toULongLong();
-        mGroups.append(group);
-    }
-    settings.endArray();
+//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+//    int size = settings.beginReadArray("mGroups");
+//    for (int i = 0; i < size; ++i)
+//    {
+//        settings.setArrayIndex(i);
+//        Group group;
+//        group.id = settings.value("id").toULongLong();
+//        group.vkid = settings.value("vkid").toString();
+//        group.name = settings.value("name").toString();
+//        group.link = settings.value("link").toString();
+//        group.photo = settings.value("photo").toString();
+//        group.membersCount = settings.value("membersCount").toULongLong();
+//        mGroups.append(group);
+//    }
+//    settings.endArray();
 
-    emit groupDataUpdated();
+//    emit groupDataUpdated();
 }
 
 Repository::~Repository()
 {
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-    settings.beginWriteArray("mGroups");
-    for (int i = 0; i < mGroups.size(); ++i)
-    {
-        settings.setArrayIndex(i);
-        settings.setValue("id", mGroups.at(i).id);
-        settings.setValue("vkid", mGroups.at(i).vkid);
-        settings.setValue("name", mGroups.at(i).name);
-        settings.setValue("link", mGroups.at(i).link);
-        settings.setValue("photo", mGroups.at(i).photo);
-        settings.setValue("membersCount", mGroups.at(i).membersCount);
-    }
-    settings.endArray();
+//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+//    settings.beginWriteArray("mGroups");
+//    for (int i = 0; i < mGroups.size(); ++i)
+//    {
+//        settings.setArrayIndex(i);
+//        settings.setValue("id", mGroups.at(i).id);
+//        settings.setValue("vkid", mGroups.at(i).vkid);
+//        settings.setValue("name", mGroups.at(i).name);
+//        settings.setValue("link", mGroups.at(i).link);
+//        settings.setValue("photo", mGroups.at(i).photo);
+//        settings.setValue("membersCount", mGroups.at(i).membersCount);
+//    }
+//    settings.endArray();
 }
 
 void Repository::clearAll()

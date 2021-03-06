@@ -2,27 +2,9 @@
 
 #include <QApplication>
 #include <QWidget>
-#include <QFrame>
-#include <QGridLayout>
-#include <QVBoxLayout>
-#include <QPushButton>
 #include <QListWidget>
-#include <QFontDatabase>
 #include <QMessageLogger>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <QtCore/QDebug>
-#include <QtCore/QtGlobal>
-#include <QtCore/QFile>
-#include <QtCore/QDateTime>
-#include <QtCore/QString>
-#include <QtCore/QMessageLogger>
-#include <QtCore/QMessageLogContext>
-#include <QtCore/QtMessageHandler>
-#include <QtWidgets/QApplication>
-#include <qapplication.h>
+#include <QFile>
 
 void debugMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {

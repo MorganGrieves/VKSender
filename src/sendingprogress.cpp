@@ -23,12 +23,14 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
     mFetcher = fetcher;
 
     connect(mFetcher.get(), &Fetcher::updatedPhoto,
-            [this](){
+            [this]()
+    {
         ui->progressBar->setValue(ui->progressBar->value() + 1);
     });
 
     connect(mFetcher.get(), &Fetcher::sentMessage,
-            [this](Group group){
+            [this](Group group)
+    {
         ui->progressBar->setValue(ui->progressBar->value() + 1);
 
             ui->resultLabel->setText(ui->resultLabel->text()
@@ -65,7 +67,8 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 
 void SendingProgress::onMessageSent(QString text, std::vector<Path> photoPaths)
 {
-    int operations = 2 * photoPaths.size() + mRepository->getGroupData().size();
+    int operations = photoPaths.size() * mRepository->getGroupData().size() + mRepository->getGroupData().size();
+    qDebug() << "The whole amount of sending operations(photos and message):" << operations;
     ui->progressBar->setMaximum(operations);
     ui->resultLabel->setText("");
     ui->progressBar->setValue(0);

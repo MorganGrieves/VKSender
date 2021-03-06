@@ -1,16 +1,9 @@
 #ifndef FETCHER_H
 #define FETCHER_H
 
-#include <string>
-
 #include <QObject>
-#include <QDateTime>
-#include <QFile>
-#include <QDataStream>
 #include <QString>
 #include <QNetworkReply>
-#include <QEventLoop>
-#include <QVector>
 
 #include "types.h"
 #include "repository.h"
@@ -60,7 +53,6 @@ struct Request
     Photos photos;
 
     QString userId = "112836979";
-    QString authorizationAccessToken = "";
     QString implicitFlowAccessToken = "";
     QString apiVersion = "5.130";
 };
@@ -72,7 +64,9 @@ class Fetcher : public QObject
 public:
     explicit Fetcher(QObject *parent = nullptr);
     ~Fetcher();
-    void setRepository(const std::shared_ptr<Repository> repository);
+    void setRepository(const std::shared_ptr<Repository> repository);   
+    bool tokenIsEmpty() const;
+    void setAccessToken(QString token);
 
 signals:
     void updatedGroupData(QVector<Group> groups);
