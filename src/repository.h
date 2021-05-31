@@ -1,8 +1,6 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-#include <vector>
-
 #include <QObject>
 #include <QString>
 #include <QVector>
@@ -29,6 +27,8 @@ signals:
 
 private:
     QVector<Group> mGroups;
+
+    QVector<QPair<Message, QVector<Group>>> mSendingVector;
 };
 
 #endif // REPOSITORY_H

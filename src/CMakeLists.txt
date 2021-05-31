@@ -1,4 +1,3 @@
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -12,11 +11,7 @@ file (GLOB_RECURSE HEADERS "*.h")
 file (GLOB_RECURSE UI "*.ui")
 file (GLOB_RECURSE RESOURCE "*.qrc" "*.rc")
 
-
-
-add_executable(VKSender ${HEADERS} ${SOURCES} ${UI} ${RESOURCE})
-
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${UI} ${RESOURCE})
 
 target_link_libraries(
     ${PROJECT_NAME}
@@ -28,3 +23,10 @@ target_link_libraries(
     Qt5::WebKitWidgets
     Qt5::WebKit
     )
+
+install(
+    TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${RUNTIME_DESTINATION}
+)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)

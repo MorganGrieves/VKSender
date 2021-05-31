@@ -11,10 +11,7 @@ GreetingWidget::GreetingWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    mVkAuthorizationView = new QWebView;
-
-    Qt::WindowFlags flags = windowFlags();
-    setWindowFlags(flags | Qt::WindowStaysOnTopHint);
+    mVkAuthorizationView = new QWebView();
 
     connect (ui->launchButton, &QPushButton::released,
              this, &GreetingWidget::onLaunchButtonClicked);
@@ -30,6 +27,7 @@ GreetingWidget::~GreetingWidget()
 
 void GreetingWidget::onLaunchButtonClicked()
 {
+
     mVkAuthorizationView->load(QUrl("https://oauth.vk.com/authorize?"
                    "client_id=7656391"
                    "&display=page"
@@ -39,10 +37,12 @@ void GreetingWidget::onLaunchButtonClicked()
                    "&v=5.130"));
 
     mVkAuthorizationView->show();
+    qDebug() << "BrowserView Launched";
 }
 
 void GreetingWidget::onViewUrlChanged(const QUrl &url)
 {
+    qDebug() << "View Url Changed" << url.url();
     QRegExp reg("access_token=[\\d\\w]+");
     if (reg.indexIn(url.fragment()) != -1)
     {

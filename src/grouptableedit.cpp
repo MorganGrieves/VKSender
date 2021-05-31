@@ -22,7 +22,7 @@ GroupTableEdit::GroupTableEdit(QWidget *parent) :
             {
                 ui->linksBeforeSendList->clear();
                 mGroups.clear();
-                qDebug() << "all items were deleted";
+                qDebug() << "All items were deleted";
             });
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [=]()
@@ -56,7 +56,7 @@ GroupTableEdit::GroupTableEdit(QWidget *parent) :
                    mGroups.end()
                 );
         delete item;
-        qDebug() << "item was deleted";
+        qDebug() << "Item was deleted";
     });
 }
 
@@ -81,7 +81,7 @@ void GroupTableEdit::addGroupFrame(Group group)
     groupFrame->setStyleSheet("border: 1px blue;"
                               "background-color: red;");
 
-    QLayout *groupFrameLayout = new QHBoxLayout();
+    QLayout *groupFrameLayout = new QHBoxLayout;
 
     QLabel *vkLinkLabel = new QLabel("https://vk.com/");
     vkLinkLabel->setAlignment(Qt::AlignRight);
@@ -162,6 +162,8 @@ void GroupTableEdit::onGroupVectorReceived(const QVector<Group> groups)
                 groupFrame->findChild<QLabel*>("groupNameLabel")->setText(group.name);
             }
         }
+
+    qDebug() << "groupVectorReceived was completed";
 }
 
 GroupTableEdit::~GroupTableEdit()

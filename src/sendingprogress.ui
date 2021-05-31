@@ -35,7 +35,7 @@
    <item>
     <widget class="QLabel" name="warningLabel">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Подождите пока программа не закончит рассылку. Закройте окно, только после окончания. &lt;span style=&quot; text-decoration: underline; color:#ff0000;&quot;&gt;Преждевременное закрытие может послужить непредвиденному поведению. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Подождите пока программа закончит рассылку. Закройте окно, только после окончания. &lt;span style=&quot; text-decoration: underline; color:#ff0000;&quot;&gt;Преждевременное закрытие может послужить непредвиденному поведению. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         qInfo() << "============================================";
         qInfo() << "Application started";
         MainWindow w;
-
+        w.setWindowState(Qt::WindowMaximized);
         w.show();
 
         a.exec();

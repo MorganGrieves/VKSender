@@ -25,6 +25,7 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
     connect(mFetcher.get(), &Fetcher::updatedPhoto,
             [this]()
     {
+        qDebug() << "photoUpdated";
         ui->progressBar->setValue(ui->progressBar->value() + 1);
     });
 
@@ -59,6 +60,7 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
                                  + QString("<p style=\"font-weight: 600; color: red;\">"
                                            + err
                                            + "</p>"));
+        qDebug() << "errorMessageSend" << err;
     });
 
     connect(this, &SendingProgress::messageSent,

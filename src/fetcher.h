@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QNetworkReply>
+#include <QPixmap>
 
 #include "types.h"
 #include "repository.h"
@@ -14,7 +15,7 @@ struct Request
     {
         QString method = "groups.getById";
         QString groupIds = "";
-        QString fields = "desciption,members_count";
+        QString fields = "description,members_count";
     };
 
     struct WallPost
@@ -48,11 +49,27 @@ struct Request
 
     };
 
+    struct UsersGet
+    {
+        QString method = "users.get";
+        QString user_ids = "";
+        QString fields = "";
+        QString name_case = "";
+    };
+
+    struct WallDelete
+    {
+        QString method = "wall.delete";
+        QString ownerId = "";
+        QString postId = "";
+    };
+
     GroupById groupById;
     WallPost wallPost;
     Photos photos;
+    WallDelete wallDelete;
+    UsersGet usersGet;
 
-    QString userId = "112836979";
     QString implicitFlowAccessToken = "";
     QString apiVersion = "5.130";
 };
@@ -61,6 +78,19 @@ class Fetcher : public QObject
 {
     Q_OBJECT
 
+signals:
+    void updatedGroupData(QVector<Group> groups);
+    void updatedPhoto();
+    void sentMessage(Group group);
+    void deletedPost(QString postId, QString ownerId);
+    void userPhoto100Update();
+    void userNameUpdate();
+
+    void errorGroupFetch(QString err);
+    void errorMessageSend(QString err);
+    void errorWallDelete(QString err);
+    void errorUserPhoto100Update(QString err);
+
 public:
     explicit Fetcher(QObject *parent = nullptr);
     ~Fetcher();
@@ -68,22 +98,26 @@ public:
     bool tokenIsEmpty() const;
     void setAccessToken(QString token);
 
-signals:
-    void updatedGroupData(QVector<Group> groups);
-    void updatedPhoto();
-    void sentMessage(Group group);
-
-    void errorGroupFetch(QString err);
-    void errorMessageSend(QString err);
+    const QPixmap &getUserPhoto100() const;
+    const QString &getUserName() const;
 
 public slots:
     void onGroupDataNeed(const std::vector<Link> links);
     void onMessageSent(const QString messageText, const std::vector<Path> photoPaths);
+    void onPostDelete(const QString postId, const QString ownerId);
+    void onUserInfoNeed();
+
+private:
+    void setUserPhoto100(const QPixmap &userphoto);
+    void setUserName(const QString &userName);
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";
     const Link mVkLink = "https://vk.com";
     QNetworkAccessManager *mNetworkManager;
+
+    QString mUserName;
+    QPixmap mUserPhoto100;
 
     std::shared_ptr<Repository> mRepository = nullptr;
 

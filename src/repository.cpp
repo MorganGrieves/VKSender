@@ -50,6 +50,7 @@ Repository::~Repository()
 void Repository::clearAll()
 {
     mGroups.clear();
+    qDebug() << "All groups cleared";
 }
 
 void Repository::serialize(const QString fileName)
@@ -57,6 +58,7 @@ void Repository::serialize(const QString fileName)
     QFile *writeFile = new QFile(fileName);
     if (!writeFile->open(QIODevice::WriteOnly))
         qCritical() << "File could not be opened.";
+    qDebug() << "mGroups was serialized";
 
     QDataStream inFile(writeFile);
     inFile.setVersion(QDataStream::Qt_5_15);
@@ -79,6 +81,7 @@ void Repository::deserialize(const QString fileName)
     outFile >> mGroups;
     readFile->close();
     readFile->deleteLater();
+    qDebug() << "mGroups was deserialized";
 
     emit groupDataUpdated();
 }
@@ -86,6 +89,7 @@ void Repository::deserialize(const QString fileName)
 void Repository::setGroupData(const QVector<Group> groups)
 {
     mGroups = groups;
+    qDebug() << "mGroups was set";
 
     emit groupDataUpdated();
 }

@@ -14,9 +14,7 @@
 #include <QHttpPart>
 #include <QHttpMultiPart>
 #include <QMessageBox>
-
-#define ORGANIZATION_NAME "Organization Name"
-#define APPLICATION_NAME "VKSender"
+#include <QByteArray>
 
 #include "fetcher.h"
 
@@ -26,9 +24,14 @@ Fetcher::Fetcher(QObject *parent) : QObject(parent)
 {
     mNetworkManager = new QNetworkAccessManager(this);
 
+//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+//    vkApi.implicitFlowAccessToken = settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString();
+}
 
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-    vkApi.implicitFlowAccessToken = settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString();
+Fetcher::~Fetcher()
+{
+//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+//    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
 }
 
 void Fetcher::setRepository(const std::shared_ptr<Repository> repository)
@@ -39,6 +42,23 @@ void Fetcher::setRepository(const std::shared_ptr<Repository> repository)
 bool Fetcher::tokenIsEmpty() const
 {
     return (vkApi.implicitFlowAccessToken == "");
+}
+
+void Fetcher::setAccessToken(QString token)
+{
+    vkApi.implicitFlowAccessToken = token;
+    qDebug() << "Token was set";
+    onUserInfoNeed();
+}
+
+const QPixmap &Fetcher::getUserPhoto100() const
+{
+    return mUserPhoto100;
+}
+
+const QString &Fetcher::getUserName() const
+{
+    return mUserName;
 }
 
 void Fetcher::onGroupDataNeed(const std::vector<Link> links)
@@ -163,7 +183,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                     reply->deleteLater();
                     throw "vkApi.photos.getWallUploadServer";
                 }
-
             });
 
             connect(reply, &QNetworkReply::finished,
@@ -252,7 +271,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                             QTimer::singleShot(500,
                                                [transferReply, group, this]()
                             {
-                                //!обработка ошибок reply
                                 QJsonParseError parseError;
                                 const auto data = transferReply->readAll();
                                 const auto document = QJsonDocument::fromJson(data, &parseError);
@@ -442,13 +460,171 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
     }
 }
 
-void Fetcher::setAccessToken(QString token)
+void Fetcher::onPostDelete(const QString postId, const QString ownerId)
 {
-    vkApi.implicitFlowAccessToken = token;
+    QUrl wallDeleteRequestUrl(mVkApiLink
+                    + vkApi.wallDelete.method
+                    );
+
+    QUrlQuery params;
+    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
+    params.addQueryItem("v", vkApi.apiVersion);
+    params.addQueryItem("owner_id", "-" + ownerId);
+    params.addQueryItem("post_id", postId);
+    wallDeleteRequestUrl.setQuery(params);
+
+    QNetworkRequest request(wallDeleteRequestUrl);
+
+    QNetworkReply *reply = mNetworkManager->get(request);
+
+    connect(reply, &QNetworkReply::errorOccurred,
+            [reply, this]()
+    {
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            qCritical() << "vkApi.wallDelete error:" << reply->errorString();
+            emit errorWallDelete("ERROR: " + reply->errorString());
+            reply->deleteLater();
+        }
+    });
+
+    connect(reply, &QNetworkReply::finished,
+            [reply, ownerId, postId, this]()
+    {
+        QString response;
+        QJsonParseError parseError;
+        const auto data = reply->readAll();
+        const auto document = QJsonDocument::fromJson(data, &parseError);
+
+        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+        if (QJsonParseError::NoError != parseError.error)
+        {
+            qCritical() << "error reply vkApi.wallDelete error finished:"
+                        << parseError.errorString() << " | " << postId << ownerId;
+            emit errorWallDelete("Не удалось удалить пост -" + ownerId);
+            reply->deleteLater();
+            return;
+        }
+
+        if (!jsonServerErrorObject.isEmpty())
+        {
+            qCritical() << "error reply vkApi.wallDelete error finished:"
+                        << parseError.errorString() << " | " << postId << ownerId;
+            emit errorWallDelete("Не удалось удалить пост -" + ownerId);
+            reply->deleteLater();
+            return;
+        }
+
+        int responseNumber = document.object()["response"].toInt();
+        if (responseNumber == 1)
+        {
+            reply->deleteLater();
+            emit deletedPost(postId, ownerId);
+        }
+        else
+        {
+            qCritical() << "error reply vkApi.wallDelete error finished:"
+                        << parseError.errorString() << " | " << postId << ownerId;
+            emit errorWallDelete("Не удалось удалить пост -" + ownerId);
+            reply->deleteLater();
+            return;
+        }
+    });
 }
 
-Fetcher::~Fetcher()
+void Fetcher::onUserInfoNeed()
 {
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
+    QUrl photo100RequestUrl(mVkApiLink
+                            + vkApi.usersGet.method
+                            );
+    QUrlQuery params;
+    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
+    params.addQueryItem("v", vkApi.apiVersion);
+    params.addQueryItem("fields", "photo_100");
+    params.addQueryItem("name_case", "Nom");
+    photo100RequestUrl.setQuery(params);
+
+    QNetworkRequest request(photo100RequestUrl);
+
+    QNetworkReply *reply = mNetworkManager->get(request);
+
+    connect(reply, &QNetworkReply::errorOccurred,
+            [reply, this]()
+    {
+        qCritical() << "vkApi.usersGet error:" << reply->errorString();
+        emit errorWallDelete("ERROR: " + reply->errorString());
+        reply->deleteLater();
+    });
+
+    connect(reply, &QNetworkReply::finished,
+            [reply, this]
+    {
+        QString response;
+        QJsonParseError parseError;
+        const auto data = reply->readAll();
+        const auto document = QJsonDocument::fromJson(data, &parseError);
+
+        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+        if (QJsonParseError::NoError != parseError.error)
+        {
+            qCritical() << "error reply vkApi.usersGet error finished:"
+                        << parseError.errorString();
+            emit errorUserPhoto100Update("Не удалось загрузить информацию по пользователю.");
+            reply->deleteLater();
+            return;
+        }
+
+        if (!jsonServerErrorObject.isEmpty())
+        {
+            qCritical() << "error reply vkApi.usersGet error finished:"
+                        << parseError.errorString();
+            emit errorUserPhoto100Update("Не удалось загрузить информацию по пользователю.");
+            reply->deleteLater();
+            return;
+        }
+
+        const QJsonArray jsonResponse = document.object()["response"].toArray();
+        qDebug() << "vk.usersGet" << jsonResponse;
+
+        setUserName(jsonResponse.at(0).toObject()["last_name"].toString() + " "
+                + jsonResponse.at(0).toObject()["first_name"].toString());
+
+        QUrl requestUrl(jsonResponse.at(0).toObject()["photo_100"].toString());
+        qDebug() << jsonResponse.at(0).toObject()["photo_100"].toString();
+        QNetworkRequest request(requestUrl);
+        QNetworkReply *reply = mNetworkManager->get(request);
+
+        connect(reply, &QNetworkReply::errorOccurred,
+                [reply, this]()
+        {
+            if (reply->error() != QNetworkReply::NoError)
+            {
+                qCritical() << "vkApi.usersGet error:" << reply->errorString();
+                emit errorGroupFetch("ERROR: " + reply->errorString());
+            }
+        });
+
+        connect(reply, &QNetworkReply::finished,
+                [reply, this]
+        {
+            QPixmap profilePicture;
+            profilePicture.loadFromData(reply->readAll());
+            setUserPhoto100(profilePicture);
+            reply->deleteLater();
+        });
+    });
+}
+
+void Fetcher::setUserPhoto100(const QPixmap &userPhoto)
+{
+    mUserPhoto100 = userPhoto;
+    emit userPhoto100Update();
+}
+
+void Fetcher::setUserName(const QString &userName)
+{
+    mUserName = userName;
+    emit userNameUpdate();
 }
