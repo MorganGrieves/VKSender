@@ -5,6 +5,7 @@
 #include <QString>
 #include <QNetworkReply>
 #include <QPixmap>
+#include <QJsonParseError>
 
 #include "types.h"
 #include "repository.h"
@@ -86,11 +87,6 @@ signals:
     void userPhoto100Update();
     void userNameUpdate();
 
-    void errorGroupFetch(QString err);
-    void errorMessageSend(QString err);
-    void errorWallDelete(QString err);
-    void errorUserPhoto100Update(QString err);
-
 public:
     explicit Fetcher(QObject *parent = nullptr);
     ~Fetcher();
@@ -105,11 +101,18 @@ public slots:
     void onGroupDataNeed(const std::vector<Link> links);
     void onMessageSent(const QString messageText, const std::vector<Path> photoPaths);
     void onPostDelete(const QString postId, const QString ownerId);
-    void onUserInfoNeed();
+    void onUserDataUpdate();
 
 private:
+    bool isReplyErrorReturned(const QNetworkReply &reply);
+    bool isJsonErrorReturned(const QJsonParseError &error);
+    bool isServerErrorReturned(const QJsonDocument &document);
+
     void setUserPhoto100(const QPixmap &userphoto);
     void setUserName(const QString &userName);
+
+    void downloadUserInfo();
+    QVector<Group> downloadUserGroups();
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";
@@ -118,6 +121,8 @@ private:
 
     QString mUserName;
     QPixmap mUserPhoto100;
+
+    QVector<Group> mUserGroups;
 
     std::shared_ptr<Repository> mRepository = nullptr;
 

@@ -5,7 +5,6 @@
 #include <QNetworkReply>
 #include <QUrl>
 #include <QJsonObject>
-#include <QJsonParseError>
 #include <QtGui>
 #include <QtCore>
 #include <QtWidgets>
@@ -48,7 +47,7 @@ void Fetcher::setAccessToken(QString token)
 {
     vkApi.implicitFlowAccessToken = token;
     qDebug() << "Token was set";
-    onUserInfoNeed();
+    onUserDataUpdate();
 }
 
 const QPixmap &Fetcher::getUserPhoto100() const
@@ -82,16 +81,6 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
 
     QNetworkReply *reply = mNetworkManager->get(request);
 
-    connect(reply, &QNetworkReply::errorOccurred,
-            [reply, this]()
-    {
-        if (reply->error() != QNetworkReply::NoError)
-        {
-            qCritical() << "vkApi.groupById error:" << reply->errorString();
-            emit errorGroupFetch("ERROR: " + reply->errorString());
-        }
-    });
-
     connect(reply, &QNetworkReply::finished,
             [reply, this]()
     {
@@ -99,20 +88,11 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
         const auto data = reply->readAll();
         const auto document = QJsonDocument::fromJson(data, &parseError);
 
-        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
-        if (QJsonParseError::NoError != parseError.error)
+        if (isJsonErrorReturned(parseError)
+                || isServerErrorReturned(document)
+                || isReplyErrorReturned(*reply))
         {
-            qCritical() << "reply vkApi.groupById finished:" << parseError.errorString();
-            emit errorGroupFetch("ERROR: " + reply->errorString());
-            reply->deleteLater();
-            return;
-        }
-
-        if (!jsonServerErrorObject.isEmpty())
-        {
-            qCritical() << "vkApi.groupById - server error:" << jsonServerErrorObject;
-            emit errorGroupFetch("Ошибка на стороне сервера.");
+            qDebug() << "error vkApi.groupById.groupIds";
             reply->deleteLater();
             return;
         }
@@ -173,18 +153,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
 
             QNetworkReply *reply = mNetworkManager->post(getWallUpdateRequest, params.query().toUtf8());
 
-            connect(reply, &QNetworkReply::errorOccurred,
-                    [reply, this]()
-            {
-                if (reply->error() != QNetworkReply::NoError)
-                {
-                    qCritical() << "vkApi.photos.getWallUploadServer error:" << reply->errorString();
-                    emit errorMessageSend("ERROR: " + reply->errorString());
-                    reply->deleteLater();
-                    throw "vkApi.photos.getWallUploadServer";
-                }
-            });
-
             connect(reply, &QNetworkReply::finished,
                     [reply, group, loop, this]()
             {
@@ -193,22 +161,12 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                 const auto data = reply->readAll();
                 const auto document = QJsonDocument::fromJson(data, &parseError);
 
-                const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
-                if (QJsonParseError::NoError != parseError.error)
+                if (isJsonErrorReturned(parseError)
+                        || isServerErrorReturned(document)
+                        || isReplyErrorReturned(*reply))
                 {
-                    qCritical() << "error reply vkApi.photos.getWallUploadServer finished:"
+                    qCritical() << "error  vkApi.photos.getWallUploadServer finished:"
                                 << parseError.errorString() << " | " << group.name << group.vkid << "|";
-                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
-                    reply->deleteLater();
-                    throw "vkApi.photos.getWallUploadServer";
-                }
-
-                if (!jsonServerErrorObject.isEmpty())
-                {
-                    qCritical() << "vkApi.photos.getWallUploadServer - server error:"
-                                << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
-                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
                     reply->deleteLater();
                     throw "vkApi.photos.getWallUploadServer";
                 }
@@ -230,7 +188,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                         if (!file->open(QIODevice::ReadOnly))
                         {
                             qCritical() << "File could not be opened:" << mPhotoPaths.at(i);
-                            emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
                             reply->deleteLater();
                             throw "File could not be opened";
                         }
@@ -251,19 +208,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                         uploadUrlRequest.setUrl(QUrl(uploadUrl));
                         QNetworkReply *transferReply = mNetworkManager->post(uploadUrlRequest, multiPart);
 
-                        connect(transferReply, &QNetworkReply::errorOccurred,
-                                [transferReply, this]()
-                        {
-                            if (transferReply->error() != QNetworkReply::NoError)
-                            {
-                                qCritical() << "vkApi.photos.getWallUploadServer error:" << transferReply->errorString();
-                                emit errorMessageSend("ERROR: " + transferReply->errorString());
-                                transferReply->deleteLater();
-                                throw "vkApi.photos.getWallUploadServer";
-                            }
-
-                        });
-
                         multiPart->setParent(transferReply);
                         connect(transferReply, &QNetworkReply::finished,
                                 [transferReply, group, this]()
@@ -277,20 +221,12 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
 
                                 const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
 
-                                if (QJsonParseError::NoError != parseError.error)
+                                if (isJsonErrorReturned(parseError)
+                                        || isServerErrorReturned(document)
+                                        || isReplyErrorReturned(*transferReply))
                                 {
-                                    qCritical() << "error reply uploadUrlRequest finished:"
+                                    qCritical() << "error uploadUrlRequest finished:"
                                                 << parseError.errorString() << " | " << group.name << group.vkid << "|";
-                                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
-                                    transferReply->deleteLater();
-                                    throw "uploadUrlRequest";
-                                }
-
-                                if (!jsonServerErrorObject.isEmpty())
-                                {
-                                    qCritical() << "uploadUrlRequest - server error:"
-                                                << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
-                                    emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
                                     transferReply->deleteLater();
                                     throw "uploadUrlRequest";
                                 }
@@ -316,19 +252,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
 
                                 QNetworkReply *newReply = mNetworkManager->post(request, params.query().toUtf8());
 
-                                connect(newReply, &QNetworkReply::errorOccurred,
-                                        [newReply, this]()
-                                {
-                                    if (newReply->error() != QNetworkReply::NoError)
-                                    {
-                                        qCritical() << "uploadUrlRequest error:" << newReply->errorString();
-                                        emit errorMessageSend("ERROR: " + newReply->errorString());
-                                        newReply->deleteLater();
-                                        throw "uploadUrlRequest";
-                                    }
-
-                                });
-
                                 connect(newReply, &QNetworkReply::finished,
                                         [newReply, group, this]()
                                 {
@@ -336,22 +259,12 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                     const auto data = newReply->readAll();
                                     const auto document = QJsonDocument::fromJson(data, &parseError);
 
-                                    const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
-                                    if (QJsonParseError::NoError != parseError.error)
+                                    if (isJsonErrorReturned(parseError)
+                                            || isServerErrorReturned(document)
+                                            || isReplyErrorReturned(*newReply))
                                     {
-                                        qCritical() << "error reply vkApi.photos.saveWallPhoto finished:"
-                                                    << parseError.errorString() << " | " << group.name << group.vkid << "|";
-                                        emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
-                                        newReply->deleteLater();
-                                        throw "vkApi.photos.saveWallPhoto";
-                                    }
-
-                                    if (!jsonServerErrorObject.isEmpty())
-                                    {
-                                        qCritical() << "vkApi.photos.saveWallPhoto - server error:"
-                                                    << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
-                                        emit errorMessageSend("Не удалось загрузить изображение для " + group.name);
+                                        qCritical() << "error vkApi.photos.saveWallPhoto finished: "
+                                                    << group.name << group.vkid << "|";
                                         newReply->deleteLater();
                                         throw "vkApi.photos.saveWallPhoto";
                                     }
@@ -399,19 +312,6 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
 
                     QNetworkReply *wallPostReply = mNetworkManager->get(request);
 
-                    connect(wallPostReply, &QNetworkReply::errorOccurred,
-                            [wallPostReply, this]()
-                    {
-                        if (wallPostReply->error() != QNetworkReply::NoError)
-                        {
-                            qCritical() << "vkApi.wallPost error:" << wallPostReply->errorString();
-                            emit errorMessageSend("ERROR: " + wallPostReply->errorString());
-                            wallPostReply->deleteLater();
-                            throw "vkApi.wallPost";
-                        }
-
-                    });
-
                     connect(wallPostReply, &QNetworkReply::finished,
                             [wallPostReply, group, this]()
                     {
@@ -419,22 +319,12 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                         const auto data = wallPostReply->readAll();
                         const auto document = QJsonDocument::fromJson(data, &parseError);
 
-                        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
-                        if (QJsonParseError::NoError != parseError.error)
+                        if (isJsonErrorReturned(parseError)
+                                || isServerErrorReturned(document)
+                                || isReplyErrorReturned(*wallPostReply))
                         {
-                            qCritical() << "reply vkApi.photos.saveWallPhoto finished:"
-                                        << parseError.errorString() << " | " << group.name << group.vkid << "|";
-                            emit errorMessageSend("Не удалось отправить пост для " + group.name);
-                            wallPostReply->deleteLater();
-                            throw "vkApi.photos.saveWallPhoto";
-                        }
-
-                        if (!jsonServerErrorObject.isEmpty())
-                        {
-                            qCritical() << "vkApi.photos.saveWallPhoto - server error:"
-                                        << jsonServerErrorObject << " | " << group.name << group.vkid << "|";;
-                            emit errorMessageSend("Не удалось отправить пост для " + group.name);
+                            qCritical() << "error vkApi.photos.saveWallPhoto finished:"
+                                        << group.name << group.vkid << "|";
                             wallPostReply->deleteLater();
                             throw "vkApi.photos.saveWallPhoto";
                         }
@@ -477,17 +367,6 @@ void Fetcher::onPostDelete(const QString postId, const QString ownerId)
 
     QNetworkReply *reply = mNetworkManager->get(request);
 
-    connect(reply, &QNetworkReply::errorOccurred,
-            [reply, this]()
-    {
-        if (reply->error() != QNetworkReply::NoError)
-        {
-            qCritical() << "vkApi.wallDelete error:" << reply->errorString();
-            emit errorWallDelete("ERROR: " + reply->errorString());
-            reply->deleteLater();
-        }
-    });
-
     connect(reply, &QNetworkReply::finished,
             [reply, ownerId, postId, this]()
     {
@@ -496,44 +375,78 @@ void Fetcher::onPostDelete(const QString postId, const QString ownerId)
         const auto data = reply->readAll();
         const auto document = QJsonDocument::fromJson(data, &parseError);
 
-        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
-        if (QJsonParseError::NoError != parseError.error)
+        if (isJsonErrorReturned(parseError)
+                || isServerErrorReturned(document)
+                || isReplyErrorReturned(*reply))
         {
-            qCritical() << "error reply vkApi.wallDelete error finished:"
-                        << parseError.errorString() << " | " << postId << ownerId;
-            emit errorWallDelete("Не удалось удалить пост -" + ownerId);
-            reply->deleteLater();
-            return;
-        }
-
-        if (!jsonServerErrorObject.isEmpty())
-        {
-            qCritical() << "error reply vkApi.wallDelete error finished:"
-                        << parseError.errorString() << " | " << postId << ownerId;
-            emit errorWallDelete("Не удалось удалить пост -" + ownerId);
+            qCritical() << "reply vkApi.wallDelete error finished: "
+                       << postId << ownerId;
             reply->deleteLater();
             return;
         }
 
         int responseNumber = document.object()["response"].toInt();
-        if (responseNumber == 1)
+        const int SUCCESS_NUMBER = 1;
+        if (responseNumber == SUCCESS_NUMBER)
         {
             reply->deleteLater();
             emit deletedPost(postId, ownerId);
         }
         else
         {
-            qCritical() << "error reply vkApi.wallDelete error finished:"
-                        << parseError.errorString() << " | " << postId << ownerId;
-            emit errorWallDelete("Не удалось удалить пост -" + ownerId);
+            qCritical() << "error vkApi.wallDelete error finished:"
+                        << postId << ownerId;
             reply->deleteLater();
             return;
         }
     });
 }
 
-void Fetcher::onUserInfoNeed()
+void Fetcher::onUserDataUpdate()
+{
+    downloadUserInfo();
+    downloadUserGroups();
+}
+
+bool Fetcher::isReplyErrorReturned(const QNetworkReply &reply)
+{
+    if (reply.error())
+        return true;
+
+    return false;
+}
+
+bool Fetcher::isJsonErrorReturned(const QJsonParseError &error)
+{
+    if (error.error)
+        return true;
+
+    return false;
+}
+
+bool Fetcher::isServerErrorReturned(const QJsonDocument &document)
+{
+    const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
+
+    if (!jsonServerErrorObject.isEmpty())
+        return true;
+
+    return false;
+}
+
+void Fetcher::setUserPhoto100(const QPixmap &userPhoto)
+{
+    mUserPhoto100 = userPhoto;
+    emit userPhoto100Update();
+}
+
+void Fetcher::setUserName(const QString &userName)
+{
+    mUserName = userName;
+    emit userNameUpdate();
+}
+
+void Fetcher::downloadUserInfo()
 {
     QUrl photo100RequestUrl(mVkApiLink
                             + vkApi.usersGet.method
@@ -549,14 +462,6 @@ void Fetcher::onUserInfoNeed()
 
     QNetworkReply *reply = mNetworkManager->get(request);
 
-    connect(reply, &QNetworkReply::errorOccurred,
-            [reply, this]()
-    {
-        qCritical() << "vkApi.usersGet error:" << reply->errorString();
-        emit errorWallDelete("ERROR: " + reply->errorString());
-        reply->deleteLater();
-    });
-
     connect(reply, &QNetworkReply::finished,
             [reply, this]
     {
@@ -565,22 +470,11 @@ void Fetcher::onUserInfoNeed()
         const auto data = reply->readAll();
         const auto document = QJsonDocument::fromJson(data, &parseError);
 
-        const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
-        if (QJsonParseError::NoError != parseError.error)
+        if (isJsonErrorReturned(parseError)
+                || isServerErrorReturned(document)
+                || isReplyErrorReturned(*reply))
         {
-            qCritical() << "error reply vkApi.usersGet error finished:"
-                        << parseError.errorString();
-            emit errorUserPhoto100Update("Не удалось загрузить информацию по пользователю.");
-            reply->deleteLater();
-            return;
-        }
-
-        if (!jsonServerErrorObject.isEmpty())
-        {
-            qCritical() << "error reply vkApi.usersGet error finished:"
-                        << parseError.errorString();
-            emit errorUserPhoto100Update("Не удалось загрузить информацию по пользователю.");
+            qCritical() << "error vkApi.usersGet error finished:";
             reply->deleteLater();
             return;
         }
@@ -596,19 +490,16 @@ void Fetcher::onUserInfoNeed()
         QNetworkRequest request(requestUrl);
         QNetworkReply *reply = mNetworkManager->get(request);
 
-        connect(reply, &QNetworkReply::errorOccurred,
-                [reply, this]()
-        {
-            if (reply->error() != QNetworkReply::NoError)
-            {
-                qCritical() << "vkApi.usersGet error:" << reply->errorString();
-                emit errorGroupFetch("ERROR: " + reply->errorString());
-            }
-        });
-
         connect(reply, &QNetworkReply::finished,
                 [reply, this]
         {
+            if (isReplyErrorReturned(*reply))
+            {
+                qCritical() << "error requestUrl finished:";
+                reply->deleteLater();
+                return;
+            }
+
             QPixmap profilePicture;
             profilePicture.loadFromData(reply->readAll());
             setUserPhoto100(profilePicture);
@@ -617,14 +508,8 @@ void Fetcher::onUserInfoNeed()
     });
 }
 
-void Fetcher::setUserPhoto100(const QPixmap &userPhoto)
+QVector<Group> Fetcher::downloadUserGroups()
 {
-    mUserPhoto100 = userPhoto;
-    emit userPhoto100Update();
+    return QVector<Group>();
 }
 
-void Fetcher::setUserName(const QString &userName)
-{
-    mUserName = userName;
-    emit userNameUpdate();
-}

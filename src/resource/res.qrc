@@ -3,19 +3,6 @@
         <file>style/image/download.svg</file>
         <file>style/image/vk_logo.svg</file>
         <file>data/account_photo.jpg</file>
-        <file>fonts/LICENSE.txt</file>
-        <file>fonts/Roboto-Black.ttf</file>
-        <file>fonts/Roboto-BlackItalic.ttf</file>
-        <file>fonts/Roboto-Bold.ttf</file>
-        <file>fonts/Roboto-BoldItalic.ttf</file>
-        <file>fonts/Roboto-Italic.ttf</file>
-        <file>fonts/Roboto-Light.ttf</file>
-        <file>fonts/Roboto-LightItalic.ttf</file>
-        <file>fonts/Roboto-Medium.ttf</file>
-        <file>fonts/Roboto-MediumItalic.ttf</file>
-        <file>fonts/Roboto-Regular.ttf</file>
-        <file>fonts/Roboto-Thin.ttf</file>
-        <file>fonts/Roboto-ThinItalic.ttf</file>
         <file>res.qrc</file>
         <file>style/image/check.png</file>
         <file>style/image/hourglass.png</file>

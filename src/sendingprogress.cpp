@@ -52,16 +52,16 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 
     });
 
-    connect(mFetcher.get(), &Fetcher::errorMessageSend,
-            [this](QString err)
-    {
+//    connect(mFetcher.get(), &Fetcher::errorMessageSend,
+//            [this](QString err)
+//    {
 
-        ui->resultLabel->setText(ui->resultLabel->text()
-                                 + QString("<p style=\"font-weight: 600; color: red;\">"
-                                           + err
-                                           + "</p>"));
-        qDebug() << "errorMessageSend" << err;
-    });
+//        ui->resultLabel->setText(ui->resultLabel->text()
+//                                 + QString("<p style=\"font-weight: 600; color: red;\">"
+//                                           + err
+//                                           + "</p>"));
+//        qDebug() << "errorMessageSend" << err;
+//    });
 
     connect(this, &SendingProgress::messageSent,
             mFetcher.get(), &Fetcher::onMessageSent);

@@ -153,7 +153,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lastEntranceLabel->setText(labelText);
     }
 
-    mFetcher->onUserInfoNeed();
+    mFetcher->onUserDataUpdate();
     setInterfaceListWidget();
     setTabs();
     hideAllTabs();
