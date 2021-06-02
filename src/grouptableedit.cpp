@@ -153,7 +153,7 @@ void GroupTableEdit::onGroupVectorReceived(const QVector<Group> groups)
         {
             QFrame *groupFrame = qobject_cast< QFrame* >(link->parent());
 
-            if (link->text() == group.link
+            if (link->text() == group.screenName
                     || filterGroupLineEdit(link->text()) == group.vkid)
             {
                 groupFrame->setStyleSheet("background-color: green;");

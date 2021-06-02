@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <QString>
+#include <QPixmap>
 
 #define ORGANIZATION_NAME "Organization Name"
 #define APPLICATION_NAME "VKSender"
@@ -18,12 +19,12 @@ using Message = QString;
 
 struct Group
 {
-    Id id = 0;
     GroupId vkid = "";
     Name name = "";
-    Link link = "";
-    Link photo = "";
-    Members membersCount = 0;
+    Link screenName = "";
+    Link photo50Link = "";
+    QPixmap photo50;
+    bool canPost = false;
 };
 
 QDataStream &operator<<(QDataStream &, const Group &);

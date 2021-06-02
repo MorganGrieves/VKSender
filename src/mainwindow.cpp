@@ -153,7 +153,6 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lastEntranceLabel->setText(labelText);
     }
 
-    mFetcher->onUserDataUpdate();
     setInterfaceListWidget();
     setTabs();
     hideAllTabs();
@@ -185,6 +184,7 @@ MainWindow::MainWindow(QWidget *parent)
             QString token = reg.cap(0).right(reg.cap(0).count() - reg.cap(0).indexOf("=") - 1);
             mFetcher->setAccessToken(token);
             mVkAuthorizationView->close();
+            mFetcher->onUserDataUpdate();
         }
     });
 

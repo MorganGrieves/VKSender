@@ -52,12 +52,17 @@ void Fetcher::setAccessToken(QString token)
 
 const QPixmap &Fetcher::getUserPhoto100() const
 {
-    return mUserPhoto100;
+    return mUserInfo.userPhoto100;
 }
 
 const QString &Fetcher::getUserName() const
 {
-    return mUserName;
+    return mUserInfo.userName;
+}
+
+const QVector<Group> &Fetcher::getUserGroups() const
+{
+    return mUserInfo.userGroups;
 }
 
 void Fetcher::onGroupDataNeed(const std::vector<Link> links)
@@ -101,18 +106,18 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
         qDebug() << jsonResponse;
 
         QVector<Group> groups;
-        Id id = 0;
+
         foreach (const QJsonValue &value, jsonResponse)
         {
             QJsonObject groupInfo = value.toObject();
 
             Group group;
-            group.id = ++id;
             group.vkid = QString::number(groupInfo["id"].toDouble(), 'f', 0);
             group.name = groupInfo["name"].toString();
-            group.link = groupInfo["screen_name"].toString();
-            group.photo = groupInfo["photo_50"].toString();
-            group.membersCount = groupInfo["members_count"].toDouble();
+            group.screenName = groupInfo["screen_name"].toString();
+            group.photo50Link = groupInfo["photo_50"].toString();
+            group.photo50 = *uploadPhoto(QUrl(group.photo50Link));
+            group.canPost = groupInfo["can_post"].toBool();
             groups.push_back(group);
         }
 
@@ -408,42 +413,67 @@ void Fetcher::onUserDataUpdate()
     downloadUserGroups();
 }
 
-bool Fetcher::isReplyErrorReturned(const QNetworkReply &reply)
+bool Fetcher::isReplyErrorReturned(const QNetworkReply &reply) const
 {
     if (reply.error())
+    {
+        qCritical() << reply.errorString();
         return true;
+    }
 
     return false;
 }
 
-bool Fetcher::isJsonErrorReturned(const QJsonParseError &error)
+bool Fetcher::isJsonErrorReturned(const QJsonParseError &error) const
 {
     if (error.error)
+    {
+        qCritical() << "jsonErrorReturned";
         return true;
+    }
 
     return false;
 }
 
-bool Fetcher::isServerErrorReturned(const QJsonDocument &document)
+bool Fetcher::isServerErrorReturned(const QJsonDocument &document) const
 {
     const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
 
     if (!jsonServerErrorObject.isEmpty())
+    {
+        qCritical() << document;
         return true;
+    }
 
     return false;
 }
 
 void Fetcher::setUserPhoto100(const QPixmap &userPhoto)
 {
-    mUserPhoto100 = userPhoto;
+    mUserInfo.userPhoto100 = userPhoto;
     emit userPhoto100Update();
 }
 
 void Fetcher::setUserName(const QString &userName)
 {
-    mUserName = userName;
+    mUserInfo.userName = userName;
     emit userNameUpdate();
+}
+
+void Fetcher::setUserId(const int &id)
+{
+    mUserInfo.userId = id;
+}
+
+void Fetcher::setUserPhoto100Link(const QString &link)
+{
+    mUserInfo.userPhoto100Link = link;
+}
+
+void Fetcher::setUserGroups(const QVector<Group> groups)
+{
+    mUserInfo.userGroups = groups;
+    emit userGroupsUpdate();
 }
 
 void Fetcher::downloadUserInfo()
@@ -474,7 +504,7 @@ void Fetcher::downloadUserInfo()
                 || isServerErrorReturned(document)
                 || isReplyErrorReturned(*reply))
         {
-            qCritical() << "error vkApi.usersGet error finished:";
+            qCritical() << "error vkApi.usersGet  finished:";
             reply->deleteLater();
             return;
         }
@@ -484,32 +514,97 @@ void Fetcher::downloadUserInfo()
 
         setUserName(jsonResponse.at(0).toObject()["last_name"].toString() + " "
                 + jsonResponse.at(0).toObject()["first_name"].toString());
-
-        QUrl requestUrl(jsonResponse.at(0).toObject()["photo_100"].toString());
-        qDebug() << jsonResponse.at(0).toObject()["photo_100"].toString();
-        QNetworkRequest request(requestUrl);
-        QNetworkReply *reply = mNetworkManager->get(request);
-
-        connect(reply, &QNetworkReply::finished,
-                [reply, this]
-        {
-            if (isReplyErrorReturned(*reply))
-            {
-                qCritical() << "error requestUrl finished:";
-                reply->deleteLater();
-                return;
-            }
-
-            QPixmap profilePicture;
-            profilePicture.loadFromData(reply->readAll());
-            setUserPhoto100(profilePicture);
-            reply->deleteLater();
-        });
+        setUserId(jsonResponse.at(0).toObject()["id"].toInt());
+        setUserPhoto100(*uploadPhoto(QUrl(jsonResponse.at(0).toObject()["photo_100"].toString())));
+        setUserPhoto100Link(jsonResponse.at(0).toObject()["photo_100"].toString());
     });
 }
 
-QVector<Group> Fetcher::downloadUserGroups()
+void Fetcher::downloadUserGroups()
 {
-    return QVector<Group>();
+    QUrl groupsRequestUrl(mVkApiLink
+                            + vkApi.groupsGet.method
+                            );
+    QUrlQuery params;
+    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
+    params.addQueryItem("v", vkApi.apiVersion);
+    params.addQueryItem("fields", vkApi.groupsGet.fields);
+    params.addQueryItem("filter", vkApi.groupsGet.filter);
+    params.addQueryItem("extended", vkApi.groupsGet.extended);
+    params.addQueryItem("count", vkApi.groupsGet.count);
+    groupsRequestUrl.setQuery(params);
+
+    QNetworkRequest request(groupsRequestUrl);
+
+    QNetworkReply *reply = mNetworkManager->get(request);
+
+    connect(reply, &QNetworkReply::finished,
+            [reply, this]
+    {
+        QString response;
+        QJsonParseError parseError;
+        const auto data = reply->readAll();
+        const auto document = QJsonDocument::fromJson(data, &parseError);
+
+        if (isJsonErrorReturned(parseError)
+                || isServerErrorReturned(document)
+                || isReplyErrorReturned(*reply))
+        {
+            qCritical() << "error vkApi.groupsGet finished:";
+            reply->deleteLater();
+            return;
+        }
+
+        const QJsonObject jsonResponse = document.object()["response"].toObject();
+        qDebug() << "vk.groupsGet" << jsonResponse;
+
+        QVector<Group> groups;
+        qDebug() << jsonResponse["count"].toInt();
+        const QJsonArray groupJsonArray = jsonResponse["items"].toArray();
+
+        foreach (const QJsonValue &value, groupJsonArray)
+        {
+            QJsonObject groupInfo = value.toObject();
+
+            Group group;
+            group.vkid = QString::number(groupInfo["id"].toDouble(), 'f', 0);
+            group.name = groupInfo["name"].toString();
+            group.screenName = groupInfo["screen_name"].toString();
+            group.photo50Link = groupInfo["photo_50"].toString();
+            group.photo50 = *uploadPhoto(QUrl(group.photo50Link));
+            group.canPost = groupInfo["can_post"].toBool();
+
+            groups.push_back(group);
+        }
+
+        setUserGroups(groups);
+        reply->deleteLater();
+    });
 }
 
+QPixmap *Fetcher::uploadPhoto(const QUrl &requestUrl) const
+{
+    QNetworkRequest request(requestUrl);
+    QNetworkReply *reply = mNetworkManager->get(request);
+    QPixmap *result = new QPixmap();
+    QEventLoop loop;
+    connect(reply, &QNetworkReply::finished,
+            &loop, &QEventLoop::quit);
+
+    connect(reply, &QNetworkReply::finished,
+            [reply, this, result]
+    {
+        if (isReplyErrorReturned(*reply))
+        {
+            qCritical() << "error requestUrl finished:";
+            reply->deleteLater();
+            return;
+        }
+
+        result->loadFromData(reply->readAll());
+        reply->deleteLater();
+    });
+    loop.exec();
+
+    return result;
+}

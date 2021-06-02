@@ -47,7 +47,6 @@ struct Request
 
         getWallUploadServer getWallUploadServer;
         saveWallPhoto saveWallPhoto;
-
     };
 
     struct UsersGet
@@ -56,6 +55,15 @@ struct Request
         QString user_ids = "";
         QString fields = "";
         QString name_case = "";
+    };
+
+    struct GroupsGet
+    {
+        QString method = "groups.get";
+        QString extended = "1";
+        QString filter = "";
+        QString fields = "can_post";
+        QString count = "1000";
     };
 
     struct WallDelete
@@ -70,9 +78,20 @@ struct Request
     Photos photos;
     WallDelete wallDelete;
     UsersGet usersGet;
+    GroupsGet groupsGet;
 
     QString implicitFlowAccessToken = "";
-    QString apiVersion = "5.130";
+    QString userId = "";
+    QString apiVersion = "5.131";
+};
+
+struct UserInfo
+{
+    int userId = 0;
+    QString userName = "";
+    Link userPhoto100Link = "";
+    QPixmap userPhoto100;
+    QVector<Group> userGroups;
 };
 
 class Fetcher : public QObject
@@ -86,6 +105,7 @@ signals:
     void deletedPost(QString postId, QString ownerId);
     void userPhoto100Update();
     void userNameUpdate();
+    void userGroupsUpdate();
 
 public:
     explicit Fetcher(QObject *parent = nullptr);
@@ -96,6 +116,7 @@ public:
 
     const QPixmap &getUserPhoto100() const;
     const QString &getUserName() const;
+    const QVector<Group> &getUserGroups() const;
 
 public slots:
     void onGroupDataNeed(const std::vector<Link> links);
@@ -104,25 +125,26 @@ public slots:
     void onUserDataUpdate();
 
 private:
-    bool isReplyErrorReturned(const QNetworkReply &reply);
-    bool isJsonErrorReturned(const QJsonParseError &error);
-    bool isServerErrorReturned(const QJsonDocument &document);
+    bool isReplyErrorReturned(const QNetworkReply &reply) const;
+    bool isJsonErrorReturned(const QJsonParseError &error) const;
+    bool isServerErrorReturned(const QJsonDocument &document) const;
 
     void setUserPhoto100(const QPixmap &userphoto);
     void setUserName(const QString &userName);
+    void setUserId(const int &id);
+    void setUserPhoto100Link(const QString &link);
+    void setUserGroups(const QVector<Group> groups);
 
     void downloadUserInfo();
-    QVector<Group> downloadUserGroups();
+    void downloadUserGroups();
+    QPixmap *uploadPhoto(const QUrl &url) const;
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";
     const Link mVkLink = "https://vk.com";
     QNetworkAccessManager *mNetworkManager;
 
-    QString mUserName;
-    QPixmap mUserPhoto100;
-
-    QVector<Group> mUserGroups;
+    UserInfo mUserInfo;
 
     std::shared_ptr<Repository> mRepository = nullptr;
 
