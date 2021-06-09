@@ -103,7 +103,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-
     mVkAuthorizationView = new QWebView();
 
     mRepository = std::make_shared<Repository>();
@@ -158,11 +157,17 @@ MainWindow::MainWindow(QWidget *parent)
     hideAllTabs();
     mNothingHereWidget->show();
 
+    mWaitingWidget->setFetcher(mFetcher);
+
     connect(ui->interfaceListWidget, &QListWidget::currentItemChanged,
             this, &MainWindow::onInterfaceListWidgetItemChanged);
 
-    connect(mWaitingWidget, &WaitingWidget::addListButtonReleased,
-            this, &MainWindow::onAddListButtonReleased);
+    connect(mWaitingWidget, &WaitingWidget::waitingListWidgetItemReleased,
+            [this](WaitingListWidgetItemEdit *item)
+    {
+        hideAllTabs();
+        ui->tabFrame->layout()->addWidget(item);
+    });
 
     connect(mFetcher.get(), &Fetcher::userPhoto100Update,
             this, &MainWindow::onProfilePictureUpdated);
@@ -187,6 +192,7 @@ MainWindow::MainWindow(QWidget *parent)
             mFetcher->onUserDataUpdate();
         }
     });
+
 
 //    connect(ui->openAction, &QAction::triggered,
 //            [this](bool)
@@ -243,7 +249,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    //mGreetingWidget->move(rect().center() - mGreetingWidget->rect().center());
     mGreetingWidget->resize(rect().size());
 }
 
@@ -411,14 +416,6 @@ void MainWindow::onChangeAccountButtonReleased()
     mVkAuthorizationView->show();
 }
 
-void MainWindow::onAddListButtonReleased()
-{
-    hideAllTabs();
-    WaitingListWidgetItemEdit *editItem
-            = new WaitingListWidgetItemEdit(qobject_cast<QWidget *>(sender()));
-    ui->tabFrame->layout()->addWidget(editItem);
-}
-
 void MainWindow::setInterfaceListWidget()
 {
     QListWidgetItem *waitingItem = new QListWidgetItem(ui->interfaceListWidget);
@@ -449,6 +446,18 @@ void MainWindow::setInterfaceListWidget()
     ui->interfaceListWidget->setItemDelegate(new InterfaceListDelegate(ui->interfaceListWidget));
 }
 
+QWidget *MainWindow::createNothingHereWidget()
+{
+    QWidget *nothingHereWidget = new QWidget(ui->tabFrame);
+    nothingHereWidget->setStyleSheet("border-radius: 4px; "
+                                      "background-color: white; "
+                                      "color: #55677d;");
+    QHBoxLayout *nothingHereWidgetLayout = new QHBoxLayout(nothingHereWidget);
+    nothingHereWidgetLayout->setContentsMargins(0, 0, 0, 0);
+    QLabel *nothingHereWidgetLabel = new QLabel("Нажмите на меню слева для начала работы", nothingHereWidget);
+    nothingHereWidgetLayout->addWidget(nothingHereWidgetLabel, 0, Qt::AlignHCenter);
+    return nothingHereWidget;
+}
 
 QPixmap MainWindow::roundPhoto100(QPixmap photo)
 {
@@ -479,14 +488,7 @@ void MainWindow::hideAllTabs()
 
 void MainWindow::setTabs()
 {
-    mNothingHereWidget = new QWidget(ui->tabFrame);
-    mNothingHereWidget->setStyleSheet("border-radius: 4px; "
-                                      "background-color: white; "
-                                      "color: #55677d;");
-    QHBoxLayout *nothingHereWidgetLayout = new QHBoxLayout(mNothingHereWidget);
-    nothingHereWidgetLayout->setContentsMargins(0, 0, 0, 0);
-    QLabel *nothingHereWidgetLabel = new QLabel("Нажмите на меню слева для начала работы", mNothingHereWidget);
-    nothingHereWidgetLayout->addWidget(nothingHereWidgetLabel, 0, Qt::AlignHCenter);
+    mNothingHereWidget = createNothingHereWidget();
     ui->tabFrame->layout()->addWidget(mNothingHereWidget);
 
     mWaitingWidget = new WaitingWidget(ui->tabFrame);

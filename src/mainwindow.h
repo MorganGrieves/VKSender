@@ -67,11 +67,11 @@ private slots:
     void onDeleteSelectedPhotosReleased();
     //void onPhotosListWidgetDoubleClicked(const QModelIndex& index);
 
-    void onAddListButtonReleased();
     void onChangeAccountButtonReleased();
 
 private:
     void setInterfaceListWidget();
+    QWidget *createNothingHereWidget();
 
     QPixmap roundPhoto100(QPixmap photo);
     void hideAllTabs();

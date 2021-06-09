@@ -574,6 +574,9 @@ void Fetcher::downloadUserGroups()
             group.photo50 = *uploadPhoto(QUrl(group.photo50Link));
             group.canPost = groupInfo["can_post"].toBool();
 
+            if (group.canPost)
+                continue;
+
             groups.push_back(group);
         }
 

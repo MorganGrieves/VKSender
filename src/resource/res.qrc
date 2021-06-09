@@ -20,5 +20,9 @@
         <file>style/image/checkbox_checked.svg</file>
         <file>style/image/checkbox_unchecked.svg</file>
         <file>style/image/warning.png</file>
+        <file>style/image/copylink.png</file>
+        <file>style/image/post.png</file>
+        <file>style/image/close.png</file>
+        <file>style/image/muffin.jpg</file>
     </qresource>
 </RCC>

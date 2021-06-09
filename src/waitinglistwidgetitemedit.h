@@ -9,6 +9,10 @@
 #include <QPainter>
 #include <QPainterPath>
 
+#include "types.h"
+#include "grouplistview.h"
+#include "fetcher.h"
+
 namespace Ui {
 class WaitingListWidgetItemEdit;
 }
@@ -26,6 +30,8 @@ public:
     explicit WaitingListWidgetItemEdit(QWidget *parent = nullptr);
     ~WaitingListWidgetItemEdit();
 
+    void setFetcher(const std::shared_ptr<Fetcher> fetcher);
+
 private slots:
     void onGroupListWidgetItemClicked(QListWidgetItem *item);
     void onBackButtonReleased();
@@ -33,11 +39,18 @@ private slots:
     void onCancelButtonReleased();
 
 private:
-    void addUserGroupListWidgetItem();
-    QPixmap roundPhoto75(QPixmap photo);
+    void addUserGroupListItem(const Group &group);
+    QPixmap roundPhoto35(QPixmap photo) const;
+
+    void setUserGroups(const QVector<Group> &groups);
+
+    void createGroupListView();
 
 private:
     Ui::WaitingListWidgetItemEdit *ui;    
+
+    GroupListView *mGroupList = nullptr;
+    std::shared_ptr<Fetcher> mFetcher = nullptr;
 };
 
 #endif // WAITINGLISTWIDGETITEMEDIT_H

@@ -49,7 +49,6 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
                                         "</p>");
             sentMessages = 0;
         }
-
     });
 
 //    connect(mFetcher.get(), &Fetcher::errorMessageSend,

@@ -9,21 +9,30 @@ WaitingListWidgetItem::WaitingListWidgetItem(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    mEditItem = new WaitingListWidgetItemEdit();
+
     connect(ui->deleteButton, &QPushButton::released,
             this, &WaitingListWidgetItem::onDeleteButtonReleased);
     connect(ui->launchButton, &QPushButton::released,
             this, &WaitingListWidgetItem::onLaunchButtonReleased);
 }
 
-//void WaitingListWidgetItem::setWaitingListWidgetItemEdit(const WaitingListWidgetItemEdit &item)
-//{
-//    mEditItem = item;
-//}
+void WaitingListWidgetItem::showItemEdit()
+{
+    emit waitingListWidgetItemReleased(mEditItem);
+}
 
-//WaitingListWidgetItemEdit &WaitingListWidgetItem::getWaitingListWidgetItemEdit() const
-//{
-//    return mEditItem;
-//}
+void WaitingListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
+{
+    mFetcher = fetcher;
+    mEditItem->setFetcher(fetcher);
+}
+
+void WaitingListWidgetItem::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton)
+        showItemEdit();
+}
 
 void WaitingListWidgetItem::onDeleteButtonReleased()
 {
@@ -38,4 +47,5 @@ void WaitingListWidgetItem::onLaunchButtonReleased()
 WaitingListWidgetItem::~WaitingListWidgetItem()
 {
     delete ui;
+    delete mEditItem;
 }

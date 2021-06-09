@@ -15,14 +15,14 @@ WaitingWidget::WaitingWidget(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->addListButton, &QPushButton::released,
-            this, &WaitingWidget::addListButtonReleased);
-    for (int i = 0; i < 3; i++)
-    {
-        WaitingListWidgetItem *item = new WaitingListWidgetItem();
-        ui->listWidget->layout()->addWidget(item);
-    }
+            this, &WaitingWidget::onAddListButtonReleased);
 
     ui->listWidget->layout()->setAlignment(Qt::AlignTop);
+}
+
+void WaitingWidget::setFetcher(const std::shared_ptr<Fetcher> fetcher)
+{
+    mFetcher = fetcher;
 }
 
 void WaitingWidget::onDeleteButtonReleased()
@@ -49,20 +49,16 @@ void WaitingWidget::onDeleteButtonReleased()
 
 void WaitingWidget::onAddListButtonReleased()
 {
-    this->hide();
-
     WaitingListWidgetItem *item = new WaitingListWidgetItem();
+    item->setFetcher(mFetcher);
     connect(item, &WaitingListWidgetItem::deleteButtonReleased,
             this, &WaitingWidget::onDeleteButtonReleased);
     connect(item, &WaitingListWidgetItem::launchButtonReleased,
             this, &WaitingWidget::onLaunchButtonReleased);
-
-//    WaitingListWidgetItemEdit *editItem = new WaitingListWidgetItemEdit(item);
-//    item->setWaitingListWidgetItemEdit(*editItem);
-//    connect(editItem, &WaitingListWidgetItemEdit::saveButtonReleased,
-//            this, &WaitingWidget::onWaitingListWidgetItemEditSaved);
-
-//    ui->listWidget->layout()->addWidget(editItem);
+    connect(item, &WaitingListWidgetItem::waitingListWidgetItemReleased,
+            this, &WaitingWidget::waitingListWidgetItemReleased);
+    item->showItemEdit();
+    ui->listWidget->layout()->addWidget(item);
 }
 
 void WaitingWidget::onLoadListsButtonReleased()
@@ -84,8 +80,6 @@ void WaitingWidget::onWaitingListWidgetItemEditSaved()
         qDebug() << "senderItem" << senderItem;
         return;
     }
-
-
 }
 
 WaitingWidget::~WaitingWidget()

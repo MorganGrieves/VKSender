@@ -13,18 +13,11 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(QWidget *parent) :
     paperClipButtonMenu->addAction(QIcon(":/style/image/file.png"), "Документ");
 
     ui->paperClipButton->setMenu(paperClipButtonMenu);
-    qDebug() << this;
 
-    addUserGroupListWidgetItem();
-    addUserGroupListWidgetItem();
-    addUserGroupListWidgetItem();
-    addUserGroupListWidgetItem();
-    addUserGroupListWidgetItem();
-
-    connect(ui->userGroupListWidget, &QListWidget::itemClicked,
-            this, &WaitingListWidgetItemEdit::onGroupListWidgetItemClicked);
-    connect(ui->groupListWidget, &QListWidget::itemClicked,
-            this, &WaitingListWidgetItemEdit::onGroupListWidgetItemClicked);
+//    connect(ui->userGroupListWidget, &QListWidget::itemClicked,
+//            this, &WaitingListWidgetItemEdit::onGroupListWidgetItemClicked);
+//    connect(ui->groupListWidget, &QListWidget::itemClicked,
+//            this, &WaitingListWidgetItemEdit::onGroupListWidgetItemClicked);
 
     connect(ui->backButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onBackButtonReleased);
@@ -33,7 +26,14 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(QWidget *parent) :
     connect(ui->cancelButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onCancelButtonReleased);
 
-    ui->tabWidget->tabBar()->setCursor(Qt::PointingHandCursor);
+    //ui->tabWidget->tabBar()->setCursor(Qt::PointingHandCursor);
+}
+
+void WaitingListWidgetItemEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
+{
+    mFetcher = fetcher;
+    for (const auto &group : fetcher->getUserGroups())
+        addUserGroupListItem(group);
 }
 
 void WaitingListWidgetItemEdit::onGroupListWidgetItemClicked(QListWidgetItem *item)
@@ -62,20 +62,25 @@ void WaitingListWidgetItemEdit::onCancelButtonReleased()
     emit cancelButtonReleased();
 }
 
-void WaitingListWidgetItemEdit::addUserGroupListWidgetItem()
+void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group)
 {
-    QListWidgetItem *item = new QListWidgetItem(ui->userGroupListWidget);
-    item->setText("Супер офигенное название для группы, блеяд");
-    item->setIcon(roundPhoto75(QPixmap(":/style/image/photo.jpg")));
-    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-    item->setCheckState(Qt::Unchecked);
-    item->setFont(QFont("Roboto", 10));
+    QStandardItemModel *model = static_cast<QStandardItemModel *>(mGroupList->model());
 
-    ui->userGroupListWidget->addItem(item);
+    QStandardItem *item = new QStandardItem();
+    item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+
+    item->setData(group.name, GroupListDelegate::GROUP_NAME);
+    item->setData(roundPhoto35(group.photo50), GroupListDelegate::GROUP_ICON);
+    item->setData("https://vk.com/" + group.screenName, GroupListDelegate::GROUP_LINK);
+    item->setSizeHint(QSize(0, 60));
+    model->appendRow(item);
+
 }
 
-QPixmap WaitingListWidgetItemEdit::roundPhoto75(QPixmap photo)
+QPixmap WaitingListWidgetItemEdit::roundPhoto35(QPixmap photo) const
 {
+    photo = photo.scaled(35, 35, Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+
     QPixmap result(photo.size());
     result.fill(Qt::transparent);
 
@@ -85,10 +90,17 @@ QPixmap WaitingListWidgetItemEdit::roundPhoto75(QPixmap photo)
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
     QPainterPath path;
-    path.addRoundedRect(0, 0, 75, 75, 75 / 2, 75 / 2);
+
+    path.addRoundedRect(0, 0, 35, 35, 35 / 2, 35 / 2);
     painter.setClipPath(path);
     painter.drawPixmap(0, 0, photo);
     return result;
+}
+
+void WaitingListWidgetItemEdit::createGroupListView()
+{
+    mGroupList = new GroupListView(this);
+    ui->selectedGroupsWidget->layout()->addWidget(mGroupList);
 }
 
 WaitingListWidgetItemEdit::~WaitingListWidgetItemEdit()
