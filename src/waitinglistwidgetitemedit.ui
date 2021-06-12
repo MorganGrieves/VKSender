@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>547</width>
-    <height>565</height>
+    <width>620</width>
+    <height>863</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -127,7 +127,7 @@ QPushButton#cancelButton:pressed
 }</string>
            </property>
            <property name="text">
-            <string>Отменить</string>
+            <string>Отменить изменения</string>
            </property>
           </widget>
          </item>
@@ -168,6 +168,52 @@ QPushButton#saveButton:pressed
            </property>
            <property name="text">
             <string>Сохранить</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+background-color: #5181b8;
+color: white;
+padding: 7px 16px 8px;
+border-radius: 4px;
+}
+
+QPushButton:hover
+{
+	background-color: #658FC0;
+}
+QPushButton:pressed
+{
+	background-color: #4a76a8;
+}</string>
+           </property>
+           <property name="text">
+            <string>Запуск</string>
+           </property>
+           <property name="icon">
+            <iconset resource="resource/res.qrc">
+             <normaloff>:/style/image/shuttle.png</normaloff>:/style/image/shuttle.png</iconset>
+           </property>
+           <property name="flat">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -225,11 +271,17 @@ border: 1px solid #dce1e6;</string>
        <height>0</height>
       </size>
      </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="styleSheet">
       <string notr="true">background-color: white;
-border-radius: 4px;</string>
+</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -242,11 +294,138 @@ border-radius: 4px;</string>
       <property name="bottomMargin">
        <number>0</number>
       </property>
+      <item alignment="Qt::AlignTop">
+       <widget class="QWidget" name="addGroupWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item alignment="Qt::AlignVCenter">
+          <widget class="QWidget" name="widget_5" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="font">
+               <font>
+                <family>Roboto</family>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">border-top-left-radius: 6px;
+border-bottom-left-radius: 6px;
+
+background-color: #FAFBFC;
+color: #656565;
+
+border: 1px solid #dce1e6;</string>
+              </property>
+              <property name="text">
+               <string>https://vk.com/</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="groupLinkEdit">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>Roboto</family>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">border-top-right-radius: 6px;
+border-bottom-right-radius: 6px;
+color: black;
+border-top: 1px solid #dce1e6;
+border-right: 1px solid #dce1e6;
+border-bottom: 1px solid #dce1e6;</string>
+              </property>
+              <property name="placeholderText">
+               <string>Ввведите ссылку на группу...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addGroupButton">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+background-color: #5181b8;
+color: white;
+padding: 7px 16px 8px;
+border-radius: 4px;
+}
+
+QPushButton:hover
+{
+	background-color: #658FC0;
+}
+QPushButton:pressed
+{
+	background-color: #4a76a8;
+}</string>
+           </property>
+           <property name="text">
+            <string>Добавить в список</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
    <item>
     <widget class="QWidget" name="contentWidget" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="styleSheet">
       <string notr="true">background-color: white;
 border-radius: 4px;</string>
@@ -307,9 +486,12 @@ border-radius: 4px;</string>
             <cursorShape>IBeamCursor</cursorShape>
            </property>
            <property name="styleSheet">
-            <string notr="true">border-radius: 6px;
+            <string notr="true">QWidget
+{
+border-radius: 6px;
 color: black;
-border: 1px solid #dce1e6;</string>
+border: 1px solid #dce1e6;
+}</string>
            </property>
            <property name="html">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -326,8 +508,144 @@ p, li { white-space: pre-wrap; }
         </layout>
        </widget>
       </item>
+      <item alignment="Qt::AlignLeft">
+       <widget class="QWidget" name="widget_4" native="true">
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="deleteSelectedButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Roboto</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+background-color: #5181b8;
+color: white;
+padding: 7px 16px 8px;
+border-radius: 4px;
+}
+
+QPushButton:hover
+{
+	background-color: #658FC0;
+}
+QPushButton:pressed
+{
+	background-color: #4a76a8;
+}</string>
+           </property>
+           <property name="text">
+            <string>Удалить выделенное</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
       <item>
-       <widget class="QWidget" name="loadedFilesWidget" native="true"/>
+       <widget class="QWidget" name="loadedFilesWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>100</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="photoWidget" native="true">
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="QListWidget" name="photoListWidget">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::MultiSelection</enum>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>50</width>
+                <height>50</height>
+               </size>
+              </property>
+              <property name="movement">
+               <enum>QListView::Static</enum>
+              </property>
+              <property name="resizeMode">
+               <enum>QListView::Adjust</enum>
+              </property>
+              <property name="viewMode">
+               <enum>QListView::IconMode</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="fileWidget" native="true">
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="0">
+             <widget class="QListWidget" name="fileListWidget">
+              <property name="resizeMode">
+               <enum>QListView::Adjust</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="videoWidget" native="true">
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+             <widget class="QListWidget" name="videoListWidget">
+              <property name="resizeMode">
+               <enum>QListView::Adjust</enum>
+              </property>
+              <property name="layoutMode">
+               <enum>QListView::SinglePass</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </widget>

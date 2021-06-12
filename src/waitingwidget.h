@@ -20,6 +20,7 @@ class WaitingWidget : public QWidget
 
 signals:
     void waitingListWidgetItemReleased(WaitingListWidgetItemEdit *item);
+    void showWidget();
 
 public:
     explicit WaitingWidget(QWidget *parent = nullptr);
@@ -39,6 +40,7 @@ private:
 
     std::vector<WaitingListWidgetItem *> mWaitingListItemVector;
     std::shared_ptr<Fetcher> mFetcher = nullptr;
+
 
 };
 

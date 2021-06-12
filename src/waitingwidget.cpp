@@ -27,7 +27,6 @@ void WaitingWidget::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 
 void WaitingWidget::onDeleteButtonReleased()
 {
-    qDebug() << sender() << qobject_cast<WaitingListWidgetItem *>(sender());
 //    std::vector<WaitingListWidgetItem *>::iterator widgetElement = std::find(mWaitingList.begin(),
 //                                                            mWaitingList.end(),
 //                                                            qobject_cast<WaitingListWidgetItem *>(sender()));
@@ -44,7 +43,8 @@ void WaitingWidget::onDeleteButtonReleased()
                                              mWaitingListItemVector.end(),
                                              sender()),
                                  mWaitingListItemVector.end());
-    //ui->listWidget->updateGeometry();
+    ui->packCounterLabel->setText(
+                QString::number(ui->listWidget->layout()->children().count()));
 }
 
 void WaitingWidget::onAddListButtonReleased()
@@ -53,12 +53,18 @@ void WaitingWidget::onAddListButtonReleased()
     item->setFetcher(mFetcher);
     connect(item, &WaitingListWidgetItem::deleteButtonReleased,
             this, &WaitingWidget::onDeleteButtonReleased);
-    connect(item, &WaitingListWidgetItem::launchButtonReleased,
-            this, &WaitingWidget::onLaunchButtonReleased);
     connect(item, &WaitingListWidgetItem::waitingListWidgetItemReleased,
             this, &WaitingWidget::waitingListWidgetItemReleased);
+    connect(item, &WaitingListWidgetItem::showWaitingWidget,
+            [&]()
+    {
+        emit showWidget();
+    });
+
     item->showItemEdit();
     ui->listWidget->layout()->addWidget(item);
+    ui->packCounterLabel->setText(
+                QString::number(ui->listWidget->layout()->children().count()));
 }
 
 void WaitingWidget::onLoadListsButtonReleased()

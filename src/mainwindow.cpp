@@ -493,6 +493,12 @@ void MainWindow::setTabs()
 
     mWaitingWidget = new WaitingWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mWaitingWidget);
+    connect(mWaitingWidget, &WaitingWidget::showWidget,
+            [&]()
+    {
+        hideAllTabs();
+        mWaitingWidget->show();
+    });
 //    QWidget *finishedWidget = new QWidget(ui->tabFrame);
 
 //    QWidget *launchedWidget = new QWidget(ui->tabFrame);

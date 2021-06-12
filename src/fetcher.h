@@ -16,7 +16,7 @@ struct Request
     {
         QString method = "groups.getById";
         QString groupIds = "";
-        QString fields = "description,members_count";
+        QString fields = "can_post";
     };
 
     struct WallPost
@@ -106,13 +106,16 @@ signals:
     void userPhoto100Update();
     void userNameUpdate();
     void userGroupsUpdate();
+    void onGroupUpdated(Group group);
 
 public:
     explicit Fetcher(QObject *parent = nullptr);
     ~Fetcher();
-    void setRepository(const std::shared_ptr<Repository> repository);   
+
+    void setRepository(const std::shared_ptr<Repository> repository);
     bool tokenIsEmpty() const;
     void setAccessToken(QString token);
+    void getGroupInfoById(const QString &id);
 
     const QPixmap &getUserPhoto100() const;
     const QString &getUserName() const;

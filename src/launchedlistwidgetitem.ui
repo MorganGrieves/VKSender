@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>WaitingListWidgetItem</class>
- <widget class="QWidget" name="WaitingListWidgetItem">
+ <class>LaunchedListWidgetItem</class>
+ <widget class="QWidget" name="LaunchedListWidgetItem">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>599</width>
     <height>80</height>
    </rect>
   </property>
@@ -22,20 +22,8 @@
     <height>80</height>
    </size>
   </property>
-  <property name="maximumSize">
-   <size>
-    <width>16777215</width>
-    <height>16777215</height>
-   </size>
-  </property>
-  <property name="cursor">
-   <cursorShape>PointingHandCursor</cursorShape>
-  </property>
   <property name="windowTitle">
    <string>Form</string>
-  </property>
-  <property name="styleSheet">
-   <string notr="true"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
@@ -96,7 +84,7 @@ border-bottom-right-radius: 0px;
          </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">background-color: #F7D73B;</string>
+         <string notr="true">background-color: red;</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
@@ -123,7 +111,7 @@ border-bottom-right-radius: 0px;
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap resource="resource/res.qrc">:/style/image/hourglass.png</pixmap>
+            <pixmap>:/style/image/shuttle.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>true</bool>
@@ -238,49 +226,18 @@ border-bottom-right-radius: 4px;
                 <widget class="QWidget" name="widget" native="true">
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <item>
-                   <widget class="QLabel" name="peopleIconLabel">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
+                   <widget class="QProgressBar" name="progressBar">
+                    <property name="value">
+                     <number>50</number>
                     </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
                     </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="pixmap">
-                     <pixmap resource="resource/res.qrc">:/style/image/users1.png</pixmap>
-                    </property>
-                    <property name="scaledContents">
+                    <property name="textVisible">
                      <bool>true</bool>
                     </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="receiverLabel">
-                    <property name="font">
-                     <font>
-                      <weight>75</weight>
-                      <bold>true</bold>
-                     </font>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">color:#C0C0C0;</string>
-                    </property>
-                    <property name="text">
-                     <string>Получатели: 100</string>
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
                     </property>
                    </widget>
                   </item>
@@ -293,44 +250,6 @@ border-bottom-right-radius: 4px;
            </layout>
           </widget>
          </item>
-         <item>
-          <widget class="QPushButton" name="deleteButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="cursor">
-            <cursorShape>PointingHandCursor</cursorShape>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton#deleteButton
-{
-background-color: #e2e9ef;
-color: #e64646;
-border-radius: 4px;
-padding: 7px 16px 8px;
-}
-
-QPushButton#deleteButton:hover
-{
-	background-color: #dfe6ed;
-	text-decoration: underline;
-}
-
-QPushButton#deleteButton:pressed
-{
-	color: #e2e9ef;
-	text-decoration: none;
-	background-color: #e64646;
-}</string>
-           </property>
-           <property name="text">
-            <string>Удалить</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
@@ -339,9 +258,6 @@ QPushButton#deleteButton:pressed
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="resource/res.qrc"/>
-  <include location="resource/res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -17,8 +17,8 @@ class WaitingListWidgetItem : public QWidget
 
 signals:
     void deleteButtonReleased();
-    void launchButtonReleased();
     void waitingListWidgetItemReleased(WaitingListWidgetItemEdit *item);
+    void showWaitingWidget();
 
 public:
     explicit WaitingListWidgetItem(QWidget *parent = nullptr);
@@ -33,12 +33,16 @@ protected:
 
 private slots:
     void onDeleteButtonReleased();
+    void onSaveButtonReleased();
+    void onCancelButtonReleased();
     void onLaunchButtonReleased();
+    void onBackButtonReleased();
 
 private:
     Ui::WaitingListWidgetItem *ui;
 
     WaitingListWidgetItemEdit *mEditItem = nullptr;
+    WaitingListWidgetItemEdit *mTmpEditItem = nullptr;
 
     std::shared_ptr<Fetcher> mFetcher = nullptr;
 };

@@ -85,7 +85,6 @@ private:
     std::shared_ptr<GroupTableEdit> mGroupTableEdit = nullptr;
     std::shared_ptr<SendingProgress> mSendingProgress = nullptr;
     std::shared_ptr<GreetingWidget> mGreetingWidget = nullptr;
-    std::map<Path, QListWidgetItem *> mPhotoPaths;
 
     QWebView *mVkAuthorizationView = nullptr;
     QWidget *mNothingHereWidget = nullptr;

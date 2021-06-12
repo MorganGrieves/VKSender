@@ -18,6 +18,8 @@ public:
         GROUP_NAME = Qt::UserRole,
         GROUP_ICON,
         GROUP_LINK,
+        GROUP_SCREENNAME,
+        GROUP_ID
     };
     explicit GroupListDelegate(QObject *parent = nullptr);
 

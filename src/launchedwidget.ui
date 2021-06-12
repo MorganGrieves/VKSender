@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>WaitingWidget</class>
- <widget class="QWidget" name="WaitingWidget">
+ <class>LaunchedWidget</class>
+ <widget class="QWidget" name="LaunchedWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>515</width>
-    <height>392</height>
+    <width>574</width>
+    <height>396</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="waitingWidgetHeaderFrame">
+    <widget class="QFrame" name="launchedWidgetHeaderFrame">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -91,12 +91,12 @@ border-radius: 4px;</string>
                <string notr="true">color: black;</string>
               </property>
               <property name="text">
-               <string>Ожидание</string>
+               <string>Запущено</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="packCounterLabel">
+             <widget class="QLabel" name="label_2">
               <property name="font">
                <font>
                 <weight>75</weight>
@@ -143,88 +143,20 @@ border-radius: 4px;</string>
         </layout>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="loadListsButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: 7px 16px 8px;
-margine: 10px;
-border-radius: 4px;
-background-color: #e2e9ef;
-color: #55677d;</string>
-        </property>
-        <property name="text">
-         <string>Загрузить списки</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="addListButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="font">
-         <font>
-          <family>Roboto</family>
-          <pointsize>9</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-          <underline>false</underline>
-          <kerning>true</kerning>
-         </font>
-        </property>
-        <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QPushButton
-{
-	background-color: #5181b8;
-	color: white;
-	padding: 7px 16px 8px;
-	border-radius: 4px;
-}
-
-QPushButton::hover
-{
-	
-}</string>
-        </property>
-        <property name="text">
-         <string>Добавить рассылку</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resource/res.qrc">
-          <normaloff>:/style/image/plus.png</normaloff>:/style/image/plus.png</iconset>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="contentFrame">
+    <widget class="QFrame" name="frame">
      <property name="styleSheet">
       <string notr="true">background-color: white;
 border-radius: 4px;</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <property name="leftMargin">
@@ -241,9 +173,6 @@ border-radius: 4px;</string>
       </property>
       <item row="0" column="0">
        <widget class="QScrollArea" name="scrollArea">
-        <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOff</enum>
-        </property>
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
@@ -255,15 +184,10 @@ border-radius: 4px;</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>515</width>
-           <height>291</height>
+           <width>574</width>
+           <height>295</height>
           </rect>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-         </layout>
         </widget>
        </widget>
       </item>
@@ -272,9 +196,6 @@ border-radius: 4px;</string>
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="resource/res.qrc"/>
-  <include location="resource/res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

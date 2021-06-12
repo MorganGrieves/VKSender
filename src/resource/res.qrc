@@ -24,5 +24,6 @@
         <file>style/image/post.png</file>
         <file>style/image/close.png</file>
         <file>style/image/muffin.jpg</file>
+        <file>style/image/doc_icons.png</file>
     </qresource>
 </RCC>

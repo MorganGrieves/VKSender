@@ -50,6 +50,55 @@ void Fetcher::setAccessToken(QString token)
     onUserDataUpdate();
 }
 
+void Fetcher::getGroupInfoById(const QString &id)
+{
+    QUrl requestUrl(mVkApiLink
+                    + vkApi.groupById.method);
+    QUrlQuery params;
+    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
+    params.addQueryItem("v", vkApi.apiVersion);
+    params.addQueryItem("fields", vkApi.groupById.fields);
+    params.addQueryItem("group_id", id);
+    requestUrl.setQuery(params.query());
+
+    QNetworkRequest request;
+    request.setUrl(requestUrl);
+
+    QNetworkReply *reply = mNetworkManager->get(request);
+
+    connect(reply, &QNetworkReply::finished,
+            [reply, this]()
+    {
+        QJsonParseError parseError;
+        const auto data = reply->readAll();
+        const auto document = QJsonDocument::fromJson(data, &parseError);
+
+        if (isJsonErrorReturned(parseError)
+                || isServerErrorReturned(document)
+                || isReplyErrorReturned(*reply))
+        {
+            qDebug() << "error vkApi.groupById.groupId";
+            reply->deleteLater();
+            return;
+        }
+
+        const QJsonObject jsonResponse = document.object()["response"].toArray().at(0).toObject();
+        qDebug() << jsonResponse;
+
+        Group group;
+
+        group.vkid = QString::number(jsonResponse["id"].toDouble(), 'f', 0);
+        group.name = jsonResponse["name"].toString();
+        group.screenName = jsonResponse["screen_name"].toString();
+        group.photo50Link = jsonResponse["photo_50"].toString();
+        group.photo50 = *uploadPhoto(QUrl(group.photo50Link));
+        group.canPost = jsonResponse["can_post"].toBool();
+
+        emit onGroupUpdated(group);
+        reply->deleteLater();
+    });
+}
+
 const QPixmap &Fetcher::getUserPhoto100() const
 {
     return mUserInfo.userPhoto100;

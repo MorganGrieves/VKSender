@@ -17,7 +17,7 @@ void GroupListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     bool checked = index.data(Qt::CheckStateRole) == Qt::Checked,
             hovered = option.state & QStyle::State_MouseOver;
 
-    QFont fntHeader(fontFamily, 9, QFont::Bold);
+    QFont fntHeader(fontFamily, 9);
     QString colorGroupName = "black";
 
     int xContent = option.rect.x() + 10,
@@ -47,10 +47,10 @@ void GroupListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     painter->setPen(QPen(colorGroupName));
     painter->drawText(QRect(groupIconPoint.x() + 45, yMiddle, widthGroupName, 32), Qt::TextSingleLine, groupName);
 
-    QPixmap closeButton = QPixmap(":/style/image/close.png").scaled(10, 10, Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    QPixmap closeButton = QPixmap(":/style/image/close.png").scaled(15, 15, Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     painter->drawPixmap(yContent - 20, yMiddle + 5, closeButton);
 
-    QPixmap copyLinkButton = QPixmap(":/style/image/copylink.png").scaled(10, 10, Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    QPixmap copyLinkButton = QPixmap(":/style/image/copylink.png").scaled(15, 15, Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     painter->drawPixmap(yContent - 50, yMiddle + 5, copyLinkButton);
 
     painter->restore();

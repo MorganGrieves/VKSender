@@ -11,15 +11,26 @@ WaitingListWidgetItem::WaitingListWidgetItem(QWidget *parent) :
 
     mEditItem = new WaitingListWidgetItemEdit();
 
+    ui->dateLabel->setText(QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm"));
+
     connect(ui->deleteButton, &QPushButton::released,
             this, &WaitingListWidgetItem::onDeleteButtonReleased);
-    connect(ui->launchButton, &QPushButton::released,
-            this, &WaitingListWidgetItem::onLaunchButtonReleased);
 }
 
 void WaitingListWidgetItem::showItemEdit()
 {
-    emit waitingListWidgetItemReleased(mEditItem);
+    mTmpEditItem = new WaitingListWidgetItemEdit(*mEditItem);
+    connect(mTmpEditItem, &WaitingListWidgetItemEdit::saveButtonReleased,
+            this, &WaitingListWidgetItem::onSaveButtonReleased);
+    connect(mTmpEditItem, &WaitingListWidgetItemEdit::cancelButtonReleased,
+            this, &WaitingListWidgetItem::onCancelButtonReleased);
+    connect(mTmpEditItem, &WaitingListWidgetItemEdit::launchButtonReleased,
+            this, &WaitingListWidgetItem::onLaunchButtonReleased);
+    connect(mTmpEditItem, &WaitingListWidgetItemEdit::backButtonReleased,
+            this, &WaitingListWidgetItem::onBackButtonReleased);
+
+    emit waitingListWidgetItemReleased(mTmpEditItem);
+    qDebug() << mTmpEditItem << mEditItem;
 }
 
 void WaitingListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
@@ -39,13 +50,38 @@ void WaitingListWidgetItem::onDeleteButtonReleased()
     emit deleteButtonReleased();
 }
 
+void WaitingListWidgetItem::onSaveButtonReleased()
+{
+    mEditItem->deleteLater();
+    mEditItem = mTmpEditItem;
+
+    if (!mEditItem->getPackName().isEmpty())
+        ui->topicLabel->setText(mEditItem->getPackName());
+    else
+        ui->topicLabel->setText("Нет названия");
+    ui->receiverLabel->setText("Получатели: " + QString::number(mEditItem->getCheckedGroupsNumber()));
+}
+
+void WaitingListWidgetItem::onCancelButtonReleased()
+{
+    mTmpEditItem->deleteLater();
+    showItemEdit();
+}
+
 void WaitingListWidgetItem::onLaunchButtonReleased()
 {
-    emit launchButtonReleased();
+
+}
+
+void WaitingListWidgetItem::onBackButtonReleased()
+{
+    ui->receiverLabel->setText("Получатели: " + QString::number(mEditItem->getCheckedGroupsNumber()));
+
+    emit showWaitingWidget();
 }
 
 WaitingListWidgetItem::~WaitingListWidgetItem()
 {
     delete ui;
-    delete mEditItem;
+    mEditItem->deleteLater();
 }
