@@ -3,19 +3,17 @@
 
 #include <QString>
 #include <QPixmap>
+#include <QUuid>
 
 #define ORGANIZATION_NAME "Organization Name"
 #define APPLICATION_NAME "VKSender"
 
 using Path = QString;
 
-using Id = quint64;
 using GroupId = QString;
 using Name = QString;
 using Link = QString;
-using Members = quint64;
-
-using Message = QString;
+using PostNumber = quint64;
 
 struct Group
 {
@@ -25,6 +23,24 @@ struct Group
     Link photo50Link = "";
     QPixmap photo50;
     bool canPost = false;
+};
+
+struct MessagePack
+{
+    QUuid id;
+    QString title;
+    QVector<QPair<Group, Qt::CheckState>> groups;
+    QVector<Path> photoPaths;
+    QVector<Path> videoPaths;
+    QVector<Path> filePaths;
+    QString message;
+};
+
+struct SendingResult
+{
+    MessagePack message;
+    QVector<QPair<Group, PostNumber>> successfulGroups;
+    QVector<Group> errorGroups;
 };
 
 QDataStream &operator<<(QDataStream &, const Group &);

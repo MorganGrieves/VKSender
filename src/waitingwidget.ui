@@ -151,9 +151,6 @@ border-radius: 4px;</string>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
-        </property>
         <property name="styleSheet">
          <string notr="true">padding: 7px 16px 8px;
 margine: 10px;

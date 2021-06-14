@@ -107,13 +107,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     mRepository = std::make_shared<Repository>();
     mFetcher = std::make_shared<Fetcher>();
-    mGroupTableEdit = std::make_shared<GroupTableEdit>(this);
-    mSendingProgress = std::make_shared<SendingProgress>(this);
 
     if (mFetcher->tokenIsEmpty())
     {
         mGreetingWidget = std::make_shared<GreetingWidget>(this);
-        //mGreetingWidget->move(rect().center() - mGreetingWidget->rect().center());
         mGreetingWidget->resize(rect().size());
         mGreetingWidget->show();
         connect(mGreetingWidget.get(), &GreetingWidget::accessTokenReceived,
@@ -125,12 +122,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     mFetcher->setRepository(mRepository);
-
-    mGroupTableEdit->setFetcher(mFetcher);
-    mGroupTableEdit->setRepository(mRepository);
-
-    mSendingProgress->setFetcher(mFetcher);
-    mSendingProgress->setRepository(mRepository);
 
     //get last date entrance and set to the label
     QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
@@ -158,6 +149,8 @@ MainWindow::MainWindow(QWidget *parent)
     mNothingHereWidget->show();
 
     mWaitingWidget->setFetcher(mFetcher);
+    mLaunchedWidget->setFetcher(mFetcher);
+    mFinishedWidget->setFetcher(mFetcher);
 
     connect(ui->interfaceListWidget, &QListWidget::currentItemChanged,
             this, &MainWindow::onInterfaceListWidgetItemChanged);
@@ -267,7 +260,6 @@ void MainWindow::onUserNameUpdated()
 void MainWindow::onInterfaceListWidgetItemChanged(QListWidgetItem *current,
                                                   QListWidgetItem *previous)
 {
-    qDebug() << ui->tabFrame->children().count();
     switch (current->data(Qt::UserRole).toInt())
     {
     case Waiting:
@@ -275,75 +267,17 @@ void MainWindow::onInterfaceListWidgetItemChanged(QListWidgetItem *current,
         mWaitingWidget->show();
         break;
     case Finished:
-
+        hideAllTabs();
+        mFinishedWidget->show();
         break;
     case Launched:
-        //ui->nothingHereFrame->setHidden(true);
+        hideAllTabs();
+        mLaunchedWidget->show();
         break;
     case Settings:
         //ui->nothingHereFrame->setHidden(true);
         break;
     }
-}
-
-void MainWindow::onAddNewPhotoButtonReleased()
-{
-//    if (ui->photosListWidget->count() >= 6)
-//    {
-//        QMessageBox::warning(this, tr("VK Sender"), tr("Загрузить можно только 6 фотографий."));
-//        return;
-//    }
-
-//    QString openImageName = QFileDialog::getOpenFileName(0, "Открыть", "",
-//                                                tr("Image Files (*.png *.jpg *.jpeg *.gif);;"
-//                                                   "All files (*.*)"));
-//    if (openImageName.isEmpty())
-//        return;
-
-//    if (mPhotoPaths.find(openImageName) != mPhotoPaths.end())
-//    {
-//        QMessageBox::warning(this, tr("VK Sender"), tr("Данное изображение уже добавлено в список."));
-//        return;
-//    }
-
-//    QListWidgetItem* listItem = new QListWidgetItem(ui->photosListWidget);
-//    listItem->setIcon(QPixmap(openImageName));
-//    mPhotoPaths[openImageName] = listItem;
-//    qDebug() << "A new photo was added. mPhotoPaths.size =" << mPhotoPaths.size();
-}
-
-void MainWindow::onDeleteSelectedPhotosReleased()
-{
-//    qDebug() << "delete selected photos";
-//    QList<QListWidgetItem *> selectedItems = ui->photosListWidget->selectedItems();
-//    for (QListWidgetItem *item : selectedItems)
-//        for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end();)
-//            if (it->second == item)
-//            {
-//                delete item;
-//                it = mPhotoPaths.erase(it);
-//            }
-//            else
-//                it++;
-//    qDebug() << "A photo was deleted. mPhotoPaths.size =" << mPhotoPaths.size();
-//}
-
-//void MainWindow::onPhotosListWidgetDoubleClicked(const QModelIndex& index)
-//{
-//    if (!index.isValid())
-//        return;
-
-//    if (QListWidget *photosListWidget = dynamic_cast <QListWidget *>(sender()))
-//        if (QListWidgetItem *photoItem = photosListWidget->takeItem(index.row()))
-//            for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end();)
-//                if (it->second == photoItem)
-//                {
-//                    delete photoItem;
-//                    it = mPhotoPaths.erase(it);
-//                }
-//                else
-//                    it++;
-//    qDebug() << "A photo was deleted. mPhotoPaths.size =" << mPhotoPaths.size();
 }
 
 void MainWindow::onSendButtonReleased()
@@ -395,12 +329,6 @@ void MainWindow::onGroupDataUpdated()
 //        ui->groupList->setItemWidget( item, groupFrame );
 //    }
 //    qDebug() << "group data updated";
-}
-
-void MainWindow::onEditListButtonReleased()
-{
-//    mGroupTableEdit->open();
-//    qDebug() << "GroupTableEdit was opened";
 }
 
 void MainWindow::onChangeAccountButtonReleased()
@@ -491,18 +419,47 @@ void MainWindow::setTabs()
     mNothingHereWidget = createNothingHereWidget();
     ui->tabFrame->layout()->addWidget(mNothingHereWidget);
 
+    mFinishedWidget = new FinishedWidget(ui->tabFrame);
+    ui->tabFrame->layout()->addWidget(mFinishedWidget);
+//    connect(mFinishedWidget, &FinishedWidget::showWidget,
+//            [&]()
+//    {
+//        hideAllTabs();
+//        mFinishedWidget->show();
+//    });
+
+    mLaunchedWidget = new LaunchedWidget(ui->tabFrame);
+    ui->tabFrame->layout()->addWidget(mLaunchedWidget);
+
+
     mWaitingWidget = new WaitingWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mWaitingWidget);
+
     connect(mWaitingWidget, &WaitingWidget::showWidget,
             [&]()
     {
         hideAllTabs();
         mWaitingWidget->show();
     });
-//    QWidget *finishedWidget = new QWidget(ui->tabFrame);
+    connect(mWaitingWidget, &WaitingWidget::launchSending,
+            [&](MessagePack message)
+    {
+        mLaunchedWidget->addLaunchedItem(message);
+        hideAllTabs();
+        for(int i = 0; i < ui->interfaceListWidget->count(); ++i)
+        {
+            if (ui->interfaceListWidget->item(i)->data(Qt::UserRole) == Launched)
+            {
+                ui->interfaceListWidget->item(i)->setCheckState(Qt::Checked);
+            }
+            else
+            {
+                ui->interfaceListWidget->item(i)->setCheckState(Qt::Unchecked);
+            }
+        }
+        mLaunchedWidget->show();
+    });
 
-//    QWidget *launchedWidget = new QWidget(ui->tabFrame);
-
-//    QWidget *settingsWidget = new QWidget(ui->tabFrame);
+    //Здесь должен быть Settings widget
 }
 

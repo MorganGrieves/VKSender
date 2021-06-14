@@ -173,25 +173,24 @@ void Fetcher::onGroupDataNeed(const std::vector<Link> links)
         emit updatedGroupData(groups);       
         reply->deleteLater();
     });
-
 }
 
-void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> photoPaths)
+void Fetcher::sendMessage(const MessagePack &pack)
 {
-    vkApi.wallPost.message = messageText;
-    mPhotoPaths = photoPaths;
-
     QEventLoop *groupLoop = new QEventLoop(this);
     connect(this, &Fetcher::sentMessage, groupLoop, &QEventLoop::quit);
 
     QEventLoop *loop = new QEventLoop(this);
     connect(this, &Fetcher::updatedPhoto, loop, &QEventLoop::quit);
 
-    for (const auto& group : mRepository->getGroupData())
+    for (const auto& group : pack.groups)
     {
+        if (group.second == Qt::Unchecked)
+            continue;
+
         try
         {
-            vkApi.wallPost.attachments = "";
+            QString attachments = "";
 
             QUrl getWallUpdateRequestUrl(mVkApiLink
                             + vkApi.photos.getWallUploadServer.method
@@ -199,16 +198,23 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
             QUrlQuery params;
             params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
             params.addQueryItem("v", vkApi.apiVersion);
-            params.addQueryItem("group_id", group.vkid);
+            params.addQueryItem("group_id", group.first.vkid);
             getWallUpdateRequestUrl.setQuery(params);
 
             QNetworkRequest getWallUpdateRequest;
             getWallUpdateRequest.setUrl(getWallUpdateRequestUrl);
+            getWallUpdateRequest.setHeader(QNetworkRequest::ContentTypeHeader,
+                                           "application/x-www-form-urlencoded");
 
             QNetworkReply *reply = mNetworkManager->post(getWallUpdateRequest, params.query().toUtf8());
 
             connect(reply, &QNetworkReply::finished,
-                    [reply, group, loop, this]()
+                    [reply,
+                    pack,
+                    group,
+                    &attachments,
+                    loop,
+                    this]()
             {
                 QString uploadUrl;
                 QJsonParseError parseError;
@@ -220,7 +226,7 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                         || isReplyErrorReturned(*reply))
                 {
                     qCritical() << "error  vkApi.photos.getWallUploadServer finished:"
-                                << parseError.errorString() << " | " << group.name << group.vkid << "|";
+                                << parseError.errorString() << " | " << group.first.name << group.first.vkid << "|";
                     reply->deleteLater();
                     throw "vkApi.photos.getWallUploadServer";
                 }
@@ -231,17 +237,22 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
 
                 uploadUrl = serverInfo["upload_url"].toString();
 
-                for (std::size_t i = 0; i < mPhotoPaths.size(); i++)
+                for (std::size_t i = 0; i < pack.photoPaths.size(); i++)
                 {
-
                     QTimer::singleShot(500,
-                                       [this, i, group, uploadUrl, reply]()
+                                       [reply,
+                                       pack,
+                                       group,
+                                       &attachments,
+                                       uploadUrl,
+                                       i,
+                                       this]()
                     {
-                        QFile *file = new QFile(mPhotoPaths.at(i));
+                        QFile *file = new QFile(pack.photoPaths.at(i));
 
                         if (!file->open(QIODevice::ReadOnly))
                         {
-                            qCritical() << "File could not be opened:" << mPhotoPaths.at(i);
+                            qCritical() << "File could not be opened:" << pack.photoPaths.at(i);
                             reply->deleteLater();
                             throw "File could not be opened";
                         }
@@ -264,10 +275,18 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
 
                         multiPart->setParent(transferReply);
                         connect(transferReply, &QNetworkReply::finished,
-                                [transferReply, group, this]()
+                                [transferReply,
+                                group,
+                                &attachments,
+                                pack,
+                                this]()
                         {
                             QTimer::singleShot(500,
-                                               [transferReply, group, this]()
+                                               [transferReply,
+                                               group,
+                                               &attachments,
+                                               pack,
+                                               this]()
                             {
                                 QJsonParseError parseError;
                                 const auto data = transferReply->readAll();
@@ -280,7 +299,7 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                         || isReplyErrorReturned(*transferReply))
                                 {
                                     qCritical() << "error uploadUrlRequest finished:"
-                                                << parseError.errorString() << " | " << group.name << group.vkid << "|";
+                                                << parseError.errorString() << " | " << group.first.name << group.first.vkid << "|";
                                     transferReply->deleteLater();
                                     throw "uploadUrlRequest";
                                 }
@@ -296,18 +315,24 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                 QUrlQuery params;
                                 params.addQueryItem("access_token",vkApi.implicitFlowAccessToken);
                                 params.addQueryItem("v", vkApi.apiVersion);
-                                params.addQueryItem("group_id", group.vkid);
+                                params.addQueryItem("group_id", group.first.vkid);
                                 params.addQueryItem("hash", jsonResponse["hash"].toString());
                                 params.addQueryItem("server", QString::number(jsonResponse["server"].toInt()));
                                 params.addQueryItem("photo", jsonResponse["photo"].toString().toUtf8());
 
                                 QNetworkRequest request;
                                 request.setUrl(requestUrl);
+                                request.setHeader(QNetworkRequest::ContentTypeHeader,
+                                                  "application/x-www-form-urlencoded");
 
                                 QNetworkReply *newReply = mNetworkManager->post(request, params.query().toUtf8());
 
                                 connect(newReply, &QNetworkReply::finished,
-                                        [newReply, group, this]()
+                                        [newReply,
+                                        pack,
+                                        group,
+                                        &attachments,
+                                        this]()
                                 {
                                     QJsonParseError parseError;
                                     const auto data = newReply->readAll();
@@ -318,7 +343,7 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                             || isReplyErrorReturned(*newReply))
                                     {
                                         qCritical() << "error vkApi.photos.saveWallPhoto finished: "
-                                                    << group.name << group.vkid << "|";
+                                                    << group.first.name << group.first.vkid << "|";
                                         newReply->deleteLater();
                                         throw "vkApi.photos.saveWallPhoto";
                                     }
@@ -329,10 +354,10 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                                     + vkApi.wallPost.method + "?"
                                                      );
 
-                                    vkApi.wallPost.attachments += "photo" + QString::number(jsonResponse["owner_id"].toInt()) +
+                                    attachments += "photo" + QString::number(jsonResponse["owner_id"].toInt()) +
                                             "_" + QString::number(jsonResponse["id"].toInt()) + ",";
 
-                                    emit updatedPhoto();
+                                    emit updatedPhoto(pack.id);
 
                                     newReply->deleteLater();
                                 });
@@ -347,7 +372,10 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                 }
 
                 QTimer::singleShot(500,
-                                   [this, group]()
+                                   [group,
+                                   pack,
+                                   &attachments,
+                                   this]()
                 {
                     QUrl requestUrl(mVkApiLink
                                     + vkApi.wallPost.method + "?"
@@ -356,9 +384,9 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                     QUrlQuery params;
                     params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
                     params.addQueryItem("v", vkApi.apiVersion);
-                    params.addQueryItem("message", vkApi.wallPost.message);
-                    params.addQueryItem("owner_id", "-" + group.vkid);
-                    params.addQueryItem("attachments", vkApi.wallPost.attachments);
+                    params.addQueryItem("message", pack.message);
+                    params.addQueryItem("owner_id", "-" + group.first.vkid);
+                    params.addQueryItem("attachments", attachments);
                     requestUrl.setQuery(params.query());
 
                     QNetworkRequest request;
@@ -367,7 +395,11 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                     QNetworkReply *wallPostReply = mNetworkManager->get(request);
 
                     connect(wallPostReply, &QNetworkReply::finished,
-                            [wallPostReply, group, this]()
+                            [wallPostReply,
+                            group,
+                            pack,
+                            &attachments,
+                            this]()
                     {
                         QJsonParseError parseError;
                         const auto data = wallPostReply->readAll();
@@ -378,13 +410,13 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
                                 || isReplyErrorReturned(*wallPostReply))
                         {
                             qCritical() << "error vkApi.photos.saveWallPhoto finished:"
-                                        << group.name << group.vkid << "|";
+                                        << group.first.name << group.first.vkid << "|";
                             wallPostReply->deleteLater();
                             throw "vkApi.photos.saveWallPhoto";
                         }
 
                         qDebug() << "wall post: " << wallPostReply->readAll();
-                        emit sentMessage(group);
+                        emit sentMessage(pack.id, group.first);
                         wallPostReply->deleteLater();
                     });
 
@@ -402,6 +434,8 @@ void Fetcher::onMessageSent(const QString messageText, const std::vector<Path> p
             continue;
         }
     }
+
+    emit sendingFinished(pack.id);
 }
 
 void Fetcher::onPostDelete(const QString postId, const QString ownerId)
@@ -621,9 +655,9 @@ void Fetcher::downloadUserGroups()
             group.screenName = groupInfo["screen_name"].toString();
             group.photo50Link = groupInfo["photo_50"].toString();
             group.photo50 = *uploadPhoto(QUrl(group.photo50Link));
-            group.canPost = groupInfo["can_post"].toBool();
+            group.canPost = groupInfo["can_post"].toInt() ? true : false;
 
-            if (group.canPost)
+            if (!group.canPost)
                 continue;
 
             groups.push_back(group);

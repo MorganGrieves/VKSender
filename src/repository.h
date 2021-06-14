@@ -28,7 +28,7 @@ signals:
 private:
     QVector<Group> mGroups;
 
-    QVector<QPair<Message, QVector<Group>>> mSendingVector;
+    //QVector<QPair<Message, QVector<Group>>> mSendingVector;
 };
 
 #endif // REPOSITORY_H

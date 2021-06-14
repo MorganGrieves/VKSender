@@ -22,34 +22,34 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 {
     mFetcher = fetcher;
 
-    connect(mFetcher.get(), &Fetcher::updatedPhoto,
-            [this]()
-    {
-        qDebug() << "photoUpdated";
-        ui->progressBar->setValue(ui->progressBar->value() + 1);
-    });
+//    connect(mFetcher.get(), &Fetcher::updatedPhoto,
+//            [this]()
+//    {
+//        qDebug() << "photoUpdated";
+//        ui->progressBar->setValue(ui->progressBar->value() + 1);
+//    });
 
-    connect(mFetcher.get(), &Fetcher::sentMessage,
-            [this](Group group)
-    {
-        ui->progressBar->setValue(ui->progressBar->value() + 1);
+//    connect(mFetcher.get(), &Fetcher::sentMessage,
+//            [this](Group group)
+//    {
+//        ui->progressBar->setValue(ui->progressBar->value() + 1);
 
-            ui->resultLabel->setText(ui->resultLabel->text()
-                                     + QString("<p style=\"font-weight: 600; color: green;\">"
-                                               "Пост в %1 успешно опубликован."
-                                               "</p>").arg(group.name));
-        sentMessages++;
+//            ui->resultLabel->setText(ui->resultLabel->text()
+//                                     + QString("<p style=\"font-weight: 600; color: green;\">"
+//                                               "Пост в %1 успешно опубликован."
+//                                               "</p>").arg(group.name));
+//        sentMessages++;
 
-        if (sentMessages == mRepository->getGroupData().size())
-        {
-            qDebug() << "Sending was finished.";
-            ui->resultLabel->setText(ui->resultLabel->text()
-                                     + "<p>"
-                                       "Рассылка завершена."
-                                        "</p>");
-            sentMessages = 0;
-        }
-    });
+//        if (sentMessages == mRepository->getGroupData().size())
+//        {
+//            qDebug() << "Sending was finished.";
+//            ui->resultLabel->setText(ui->resultLabel->text()
+//                                     + "<p>"
+//                                       "Рассылка завершена."
+//                                        "</p>");
+//            sentMessages = 0;
+//        }
+//    });
 
 //    connect(mFetcher.get(), &Fetcher::errorMessageSend,
 //            [this](QString err)
@@ -62,8 +62,8 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 //        qDebug() << "errorMessageSend" << err;
 //    });
 
-    connect(this, &SendingProgress::messageSent,
-            mFetcher.get(), &Fetcher::onMessageSent);
+//    connect(this, &SendingProgress::messageSent,
+//            mFetcher.get(), &Fetcher::onMessageSent);
 }
 
 void SendingProgress::onMessageSent(QString text, std::vector<Path> photoPaths)

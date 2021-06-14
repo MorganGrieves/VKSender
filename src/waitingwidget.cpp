@@ -55,6 +55,8 @@ void WaitingWidget::onAddListButtonReleased()
             this, &WaitingWidget::onDeleteButtonReleased);
     connect(item, &WaitingListWidgetItem::waitingListWidgetItemReleased,
             this, &WaitingWidget::waitingListWidgetItemReleased);
+    connect(item, &WaitingListWidgetItem::launchSending,
+            this, &WaitingWidget::onLaunchSending);
     connect(item, &WaitingListWidgetItem::showWaitingWidget,
             [&]()
     {
@@ -72,9 +74,11 @@ void WaitingWidget::onLoadListsButtonReleased()
     //загрузка файла с ожидающими людьми
 }
 
-void WaitingWidget::onLaunchButtonReleased()
+void WaitingWidget::onLaunchSending(MessagePack message)
 {
-    //Желтая кнопка на пункт меню
+    if (WaitingListWidgetItem *item = qobject_cast<WaitingListWidgetItem *>(sender()))
+        item->deleteLater();
+    emit launchSending(message);
 }
 
 void WaitingWidget::onWaitingListWidgetItemEditSaved()

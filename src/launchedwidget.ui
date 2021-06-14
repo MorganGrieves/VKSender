@@ -91,12 +91,12 @@ border-radius: 4px;</string>
                <string notr="true">color: black;</string>
               </property>
               <property name="text">
-               <string>Запущено</string>
+               <string>В работе</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_2">
+             <widget class="QLabel" name="packCounterLabel">
               <property name="font">
                <font>
                 <weight>75</weight>
@@ -188,6 +188,7 @@ border-radius: 4px;</string>
            <height>295</height>
           </rect>
          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2"/>
         </widget>
        </widget>
       </item>

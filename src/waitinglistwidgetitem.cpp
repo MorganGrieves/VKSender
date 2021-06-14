@@ -28,9 +28,7 @@ void WaitingListWidgetItem::showItemEdit()
             this, &WaitingListWidgetItem::onLaunchButtonReleased);
     connect(mTmpEditItem, &WaitingListWidgetItemEdit::backButtonReleased,
             this, &WaitingListWidgetItem::onBackButtonReleased);
-
     emit waitingListWidgetItemReleased(mTmpEditItem);
-    qDebug() << mTmpEditItem << mEditItem;
 }
 
 void WaitingListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
@@ -70,6 +68,11 @@ void WaitingListWidgetItem::onCancelButtonReleased()
 
 void WaitingListWidgetItem::onLaunchButtonReleased()
 {
+    if (WaitingListWidgetItemEdit *itemEdit
+            = qobject_cast<WaitingListWidgetItemEdit *>(sender()))
+    {
+        emit launchSending(itemEdit->getMessageInfo());
+    }
 
 }
 

@@ -19,6 +19,7 @@ signals:
     void deleteButtonReleased();
     void waitingListWidgetItemReleased(WaitingListWidgetItemEdit *item);
     void showWaitingWidget();
+    void launchSending(MessagePack pack);
 
 public:
     explicit WaitingListWidgetItem(QWidget *parent = nullptr);

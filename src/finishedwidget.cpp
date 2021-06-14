@@ -8,6 +8,11 @@ FinishedWidget::FinishedWidget(QWidget *parent) :
     ui->setupUi(this);
 }
 
+void FinishedWidget::setFetcher(const std::shared_ptr<Fetcher> fetcher)
+{
+    mFetcher = fetcher;
+}
+
 FinishedWidget::~FinishedWidget()
 {
     delete ui;

@@ -100,13 +100,14 @@ class Fetcher : public QObject
 
 signals:
     void updatedGroupData(QVector<Group> groups);
-    void updatedPhoto();
-    void sentMessage(Group group);
+    void updatedPhoto(QUuid id);
+    void sentMessage(QUuid id, Group group);
     void deletedPost(QString postId, QString ownerId);
     void userPhoto100Update();
     void userNameUpdate();
     void userGroupsUpdate();
     void onGroupUpdated(Group group);
+    void sendingFinished(QUuid id);
 
 public:
     explicit Fetcher(QObject *parent = nullptr);
@@ -121,9 +122,10 @@ public:
     const QString &getUserName() const;
     const QVector<Group> &getUserGroups() const;
 
+    void sendMessage(const MessagePack &pack);
+
 public slots:
     void onGroupDataNeed(const std::vector<Link> links);
-    void onMessageSent(const QString messageText, const std::vector<Path> photoPaths);
     void onPostDelete(const QString postId, const QString ownerId);
     void onUserDataUpdate();
 
@@ -150,8 +152,6 @@ private:
     UserInfo mUserInfo;
 
     std::shared_ptr<Repository> mRepository = nullptr;
-
-    std::vector<Path> mPhotoPaths;
 };
 
 #endif // FETCHER_H

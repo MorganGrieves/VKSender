@@ -118,7 +118,7 @@ void GroupListView::onItemClicked(const QModelIndex &index)
     if (copyLinkItem)
     {
         if( QClipboard* c = QApplication::clipboard() )
-            c->setText(index.data(GroupListDelegate::GROUP_LINK).toString());
+            c->setText("https://vk.com/" + index.data(GroupListDelegate::GROUP_SCREENNAME).toString());
         return;
     }
 

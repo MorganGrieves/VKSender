@@ -31,6 +31,8 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(QWidget *parent) :
             this, &WaitingListWidgetItemEdit::onAddGroupButtonReleased);
     connect(ui->backButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onBackButtonReleased);
+    connect(ui->launchButton, &QPushButton::released,
+            this, &WaitingListWidgetItemEdit::onLaunchButtonReleased);
 
     connect(mPhotoAction, &QAction::triggered,
             [this](bool)
@@ -71,7 +73,11 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(const WaitingListWidgetItem
             this, &WaitingListWidgetItemEdit::onUserGroupsUpdate);
 
     for (const auto & photoPath : item.mPhotoPaths)
-        mPhotoPaths[photoPath.first] = photoPath.second->clone();
+    {
+        QListWidgetItem * clone = photoPath.second->clone();
+        mPhotoPaths[photoPath.first] = clone;
+        ui->photoListWidget->addItem(clone);
+    }
 
     ui->messageTextEdit->setMarkdown(item.ui->messageTextEdit->toMarkdown());
 
@@ -121,6 +127,34 @@ int WaitingListWidgetItemEdit::getCheckedGroupsNumber()
                checkedGroups++;
 
     return checkedGroups;
+}
+
+MessagePack WaitingListWidgetItemEdit::getMessageInfo() const
+{
+    MessagePack result;
+    result.id = QUuid::createUuid();
+    if (QStandardItemModel *itemModel = static_cast<QStandardItemModel *>(mGroupList->model()))
+        for(int i = 0; i < itemModel->rowCount(); ++i)
+        {
+            Group group;
+
+            group.vkid = itemModel->item(i)->data(GroupListDelegate::GROUP_ID).toString();
+            group.name = itemModel->item(i)->data(GroupListDelegate::GROUP_NAME).toString();
+            group.screenName = itemModel->item(i)->data(GroupListDelegate::GROUP_SCREENNAME).toString();
+            group.photo50Link = itemModel->item(i)->data(GroupListDelegate::GROUP_PHOTO50LINK).toString();
+            group.photo50 = itemModel->item(i)->data(GroupListDelegate::GROUP_ICON).value<QPixmap>();
+            group.canPost = itemModel->item(i)->data(GroupListDelegate::GROUP_CANPOST).toBool();
+
+            result.groups.push_back(QPair<Group, Qt::CheckState>(group,
+                                                                 itemModel->item(i)->checkState()));
+        }
+
+    result.message = ui->messageTextEdit->toPlainText();
+    result.title = ui->namePackLineEdit->text();
+    for (const auto &[Path, _] : mPhotoPaths)
+        result.photoPaths.push_back(Path);
+
+    return result;
 }
 
 void WaitingListWidgetItemEdit::onGroupListWidgetItemClicked(QListWidgetItem *item)
@@ -226,6 +260,12 @@ void WaitingListWidgetItemEdit::onBackButtonReleased()
     emit backButtonReleased();
 }
 
+void WaitingListWidgetItemEdit::onLaunchButtonReleased()
+{
+    emit saveButtonReleased();
+    emit launchButtonReleased();
+}
+
 void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group)
 {
     QStandardItemModel *model = static_cast<QStandardItemModel *>(mGroupList->model());
@@ -235,9 +275,11 @@ void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group)
 
     item->setData(group.name, GroupListDelegate::GROUP_NAME);
     item->setData(roundPhoto35(group.photo50), GroupListDelegate::GROUP_ICON);
-    item->setData("https://vk.com/" + group.screenName, GroupListDelegate::GROUP_LINK);
     item->setData(group.screenName, GroupListDelegate::GROUP_SCREENNAME);
     item->setData(group.vkid, GroupListDelegate::GROUP_ID);
+    item->setData(group.canPost, GroupListDelegate::GROUP_CANPOST);
+    item->setData(group.photo50Link, GroupListDelegate::GROUP_PHOTO50LINK);
+
     item->setSizeHint(QSize(0, 60));
     model->appendRow(item);
     mSaveFlag = true;

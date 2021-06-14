@@ -36,6 +36,7 @@ public:
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     QString getPackName() const;
     int getCheckedGroupsNumber();
+    MessagePack getMessageInfo() const;
 
 private slots:
     void onGroupListWidgetItemClicked(QListWidgetItem *item);
@@ -46,6 +47,7 @@ private slots:
     void onDeleteSelectedButtonReleased();
     void onAddGroupButtonReleased();
     void onBackButtonReleased();
+    void onLaunchButtonReleased();
 
 private:
     void addUserGroupListItem(const Group &group);
@@ -67,8 +69,6 @@ private:
     bool mSaveFlag = false;
 
     std::map<Path, QListWidgetItem *> mPhotoPaths;
-
-
 };
 
 #endif // WAITINGLISTWIDGETITEMEDIT_H

@@ -8,9 +8,9 @@
 #include <QWebView>
 
 #include "waitingwidget.h"
+#include "finishedwidget.h"
+#include "launchedwidget.h"
 #include "repository.h"
-#include "grouptableedit.h"
-#include "sendingprogress.h"
 #include "greetingwidget.h"
 #include "types.h"
 #include "waitinglistwidgetitemedit.h"
@@ -60,12 +60,8 @@ private slots:
 
     void onInterfaceListWidgetItemChanged(QListWidgetItem *current,
                                           QListWidgetItem *previous);
-    void onEditListButtonReleased();
     void onGroupDataUpdated();
     void onSendButtonReleased();
-    void onAddNewPhotoButtonReleased();
-    void onDeleteSelectedPhotosReleased();
-    //void onPhotosListWidgetDoubleClicked(const QModelIndex& index);
 
     void onChangeAccountButtonReleased();
 
@@ -82,12 +78,13 @@ private:
 
     std::shared_ptr<Repository> mRepository = nullptr;
     std::shared_ptr<Fetcher> mFetcher = nullptr;
-    std::shared_ptr<GroupTableEdit> mGroupTableEdit = nullptr;
-    std::shared_ptr<SendingProgress> mSendingProgress = nullptr;
     std::shared_ptr<GreetingWidget> mGreetingWidget = nullptr;
 
     QWebView *mVkAuthorizationView = nullptr;
+
     QWidget *mNothingHereWidget = nullptr;
     WaitingWidget *mWaitingWidget = nullptr;
+    FinishedWidget *mFinishedWidget = nullptr;
+    LaunchedWidget *mLaunchedWidget = nullptr;
 };
 #endif // MAINWINDOW_H
