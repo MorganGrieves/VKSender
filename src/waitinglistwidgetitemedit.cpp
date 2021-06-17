@@ -117,6 +117,25 @@ QString WaitingListWidgetItemEdit::getPackName() const
     return ui->namePackLineEdit->text();
 }
 
+void WaitingListWidgetItemEdit::setMessagePack(MessagePack message)
+{
+    ui->namePackLineEdit->setText(message.title);
+    ui->messageTextEdit->setText(message.message);
+
+    for (const auto &group : message.groups)
+        addUserGroupListItem(group.first, group.second);
+
+    for (const auto &fileName : message.photoPaths)
+    {
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(fileName));
+        ui->photoListWidget->addItem(listItem);
+        mPhotoPaths[fileName] = listItem;
+    }
+
+    emit saveButtonReleased();
+}
+
 int WaitingListWidgetItemEdit::getCheckedGroupsNumber()
 {
     int checkedGroups = 0;
@@ -262,11 +281,16 @@ void WaitingListWidgetItemEdit::onBackButtonReleased()
 
 void WaitingListWidgetItemEdit::onLaunchButtonReleased()
 {
+    if (ui->messageTextEdit->toPlainText().isEmpty() && mPhotoPaths.empty())
+    {
+        QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
+        return;
+    }
     emit saveButtonReleased();
     emit launchButtonReleased();
 }
 
-void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group)
+void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group, Qt::CheckState state)
 {
     QStandardItemModel *model = static_cast<QStandardItemModel *>(mGroupList->model());
 
@@ -279,6 +303,7 @@ void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group)
     item->setData(group.vkid, GroupListDelegate::GROUP_ID);
     item->setData(group.canPost, GroupListDelegate::GROUP_CANPOST);
     item->setData(group.photo50Link, GroupListDelegate::GROUP_PHOTO50LINK);
+    item->setData(Qt::CheckStateRole, state);
 
     item->setSizeHint(QSize(0, 60));
     model->appendRow(item);

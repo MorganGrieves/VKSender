@@ -1,0 +1,59 @@
+#include "finishedlistwidgetitemedit.h"
+#include "ui_finishedlistwidgetitemedit.h"
+
+FinishedListWidgetItemEdit::FinishedListWidgetItemEdit(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::FinishedListWidgetItemEdit)
+{
+    ui->setupUi(this);
+
+    ui->noErrorGroupList->layout()->setAlignment(Qt::AlignTop);
+    ui->errorGroupList->layout()->setAlignment(Qt::AlignTop);
+
+    connect(ui->cancelButton, &QPushButton::released,
+            this, &FinishedListWidgetItemEdit::onCancelButtonReleased);
+    connect(ui->backToWaitingButton, &QPushButton::released,
+            this, &FinishedListWidgetItemEdit::onBackToWaitingButtonReleased);
+}
+
+void FinishedListWidgetItemEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
+{
+    mFetcher = fetcher;
+}
+
+void FinishedListWidgetItemEdit::setSendingResult(SendingResult result)
+{
+    mResult = result;
+    for (const auto& [group, postNumber] : result.successfulGroups)
+    {
+        NoErrorGroupItem *item = new NoErrorGroupItem();
+        item->setFetcher(mFetcher);
+        item->setGroup(group);
+        item->setPostNumber(postNumber);
+        ui->noErrorGroupList->layout()->addWidget(item);
+    }
+
+    for (const auto& group : result.errorGroups)
+    {
+        ErrorGroupItem *item = new ErrorGroupItem();
+        item->setGroup(group);
+        ui->errorGroupList->layout()->addWidget(item);
+    }
+}
+
+void FinishedListWidgetItemEdit::onCancelButtonReleased()
+{
+    for (const auto &[group, postNumber] : mResult.successfulGroups)
+        mFetcher->onPostDelete(postNumber, group.name);
+    qDeleteAll(ui->noErrorGroupList->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
+}
+
+void FinishedListWidgetItemEdit::onBackToWaitingButtonReleased()
+{
+    emit backToWaiting(mResult.message);
+}
+
+FinishedListWidgetItemEdit::~FinishedListWidgetItemEdit()
+{
+    delete ui;
+}

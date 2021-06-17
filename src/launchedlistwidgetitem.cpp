@@ -25,23 +25,33 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
             ui->progressBar->setValue(ui->progressBar->value() + 1);
         }
     });
+
     connect(mFetcher.get(), &Fetcher::sentMessage,
-            [&](QUuid id, Group group)
+            [&](QUuid id, Group group, PostNumber number)
     {
         if (id == message.id)
         {
-            mResult.successfulGroups.push_back(QPair(group, 1));
+            mResult.successfulGroups.push_back(QPair(group, number));
+            mResult.errorGroups.erase(std::remove_if(mResult.errorGroups.begin(),
+                                                     mResult.errorGroups.end(),
+                                                     [&](Group errorGroup)
+            {
+                return (errorGroup.vkid == group.vkid);
+            }));
             ui->progressBar->setValue(ui->progressBar->value() + 1);
         }
     });
+
     connect(mFetcher.get(), &Fetcher::sendingFinished,
             [&](QUuid id)
     {
         if (id == message.id)
         {
             ui->progressBar->setValue(mOperationsAmount);
+            emit sendingFinished(mResult);
         }
     });
+
     std::function checkedGroups
     {
         [&]() -> size_t
@@ -56,7 +66,13 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
         }
      };
 
-    mOperationsAmount = message.photoPaths.size() * checkedGroups();
+    for (const auto &[group, checkState] : message.groups)
+    {
+        if (checkState == Qt::Checked)
+            mResult.errorGroups.push_back(group);
+    }
+
+    mOperationsAmount = message.photoPaths.size() ? message.photoPaths.size() * checkedGroups() : checkedGroups();
     ui->progressBar->setValue(0);
     ui->progressBar->setMaximum(mOperationsAmount);
     ui->topicLabel->setText(message.title);

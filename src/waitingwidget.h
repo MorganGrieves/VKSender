@@ -28,6 +28,7 @@ public:
     ~WaitingWidget();
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
+    void addListItem(MessagePack message);
 
 private slots:
     void onDeleteButtonReleased();

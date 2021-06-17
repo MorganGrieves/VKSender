@@ -101,7 +101,7 @@ class Fetcher : public QObject
 signals:
     void updatedGroupData(QVector<Group> groups);
     void updatedPhoto(QUuid id);
-    void sentMessage(QUuid id, Group group);
+    void sentMessage(QUuid id, Group group, PostNumber number);
     void deletedPost(QString postId, QString ownerId);
     void userPhoto100Update();
     void userNameUpdate();
@@ -146,7 +146,6 @@ private:
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";
-    const Link mVkLink = "https://vk.com";
     QNetworkAccessManager *mNetworkManager;
 
     UserInfo mUserInfo;

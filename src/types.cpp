@@ -2,26 +2,24 @@
 
 #include <QDataStream>
 
-QDataStream &operator<<(QDataStream &out, const Group &group)
+QDataStream &operator<<(QDataStream &out, const MessagePack &message)
 {
-    out << group.vkid;
-    out << group.name;
-    out << group.screenName;
-    out << group.photo50Link;
-    out << group.photo50;
-    out << group.canPost;
+    out << message.id;
+    out << message.title;
+    out << message.groups;
+    out << message.message;
+    out << message.photoPaths;
 
     return out;
 }
 
-QDataStream &operator>>(QDataStream &in, Group &group)
+QDataStream &operator>>(QDataStream &in, MessagePack &message)
 {
-    in >> group.vkid;
-    in >> group.name;
-    in >> group.screenName;
-    in >> group.photo50Link;
-    in >> group.photo50;
-    in >> group.canPost;
+    in >> message.id;
+    in >> message.title;
+    in >> message.groups;
+    in >> message.message;
+    in >> message.photoPaths;
 
     return in;
 }

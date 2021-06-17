@@ -47,54 +47,34 @@ Repository::~Repository()
 //    settings.endArray();
 }
 
-void Repository::clearAll()
-{
-    mGroups.clear();
-    qDebug() << "All groups cleared";
-}
-
-void Repository::serialize(const QString fileName)
+void Repository::serialize(const QVector<MessagePack> messages, const QString fileName)
 {
     QFile *writeFile = new QFile(fileName);
     if (!writeFile->open(QIODevice::WriteOnly))
         qCritical() << "File could not be opened.";
-    qDebug() << "mGroups was serialized";
+    qDebug() << "messages were serialized";
 
     QDataStream inFile(writeFile);
     inFile.setVersion(QDataStream::Qt_5_15);
-    inFile << mGroups;
+    inFile << messages;
     writeFile->flush();
     writeFile->close();
     writeFile->deleteLater();
 }
 
-void Repository::deserialize(const QString fileName)
+QVector<MessagePack> Repository::deserialize(const QString fileName)
 {
-    mGroups.clear();
-
     QFile *readFile = new QFile(fileName);
     if (!readFile->open(QFile::ReadOnly))
         qCritical() << "File could not be opened.";
 
+    QVector<MessagePack> result;
     QDataStream outFile(readFile);
     outFile.setVersion(QDataStream::Qt_5_15);
-    outFile >> mGroups;
+    outFile >> result;
     readFile->close();
     readFile->deleteLater();
-    qDebug() << "mGroups was deserialized";
+    qDebug() << "messages were deserialized";
 
-    emit groupDataUpdated();
-}
-
-void Repository::setGroupData(const QVector<Group> groups)
-{
-    mGroups = groups;
-    qDebug() << "mGroups was set";
-
-    emit groupDataUpdated();
-}
-
-QVector<Group> Repository::getGroupData() const
-{
-    return mGroups;
+    return result;
 }

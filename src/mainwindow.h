@@ -60,8 +60,6 @@ private slots:
 
     void onInterfaceListWidgetItemChanged(QListWidgetItem *current,
                                           QListWidgetItem *previous);
-    void onGroupDataUpdated();
-    void onSendButtonReleased();
 
     void onChangeAccountButtonReleased();
 

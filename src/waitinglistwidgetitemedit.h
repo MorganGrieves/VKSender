@@ -35,6 +35,7 @@ public:
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     QString getPackName() const;
+    void setMessagePack(MessagePack message);
     int getCheckedGroupsNumber();
     MessagePack getMessageInfo() const;
 
@@ -50,7 +51,7 @@ private slots:
     void onLaunchButtonReleased();
 
 private:
-    void addUserGroupListItem(const Group &group);
+    void addUserGroupListItem(const Group &group, Qt::CheckState state = Qt::Unchecked);
     QPixmap roundPhoto35(QPixmap photo) const;
     void setUserGroups(const QVector<Group> &groups);
     void createGroupListView();

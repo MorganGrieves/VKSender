@@ -13,7 +13,7 @@ using Path = QString;
 using GroupId = QString;
 using Name = QString;
 using Link = QString;
-using PostNumber = quint64;
+using PostNumber = QString;
 
 struct Group
 {

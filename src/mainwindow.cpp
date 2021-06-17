@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    mVkAuthorizationView = new QWebView();
+    mVkAuthorizationView = new QWebView(this);
 
     mRepository = std::make_shared<Repository>();
     mFetcher = std::make_shared<Fetcher>();
@@ -162,6 +162,18 @@ MainWindow::MainWindow(QWidget *parent)
         ui->tabFrame->layout()->addWidget(item);
     });
 
+    connect(mFinishedWidget, &FinishedWidget::finishedListWidgetItemReleased,
+            [this](FinishedListWidgetItemEdit *item)
+    {
+        hideAllTabs();
+        ui->tabFrame->layout()->addWidget(item);
+    });
+    connect(mFinishedWidget, &FinishedWidget::abortionFinished,
+            [this](MessagePack message)
+    {
+        mWaitingWidget->addListItem(message);
+    });
+
     connect(mFetcher.get(), &Fetcher::userPhoto100Update,
             this, &MainWindow::onProfilePictureUpdated);
 
@@ -185,7 +197,6 @@ MainWindow::MainWindow(QWidget *parent)
             mFetcher->onUserDataUpdate();
         }
     });
-
 
 //    connect(ui->openAction, &QAction::triggered,
 //            [this](bool)
@@ -278,57 +289,6 @@ void MainWindow::onInterfaceListWidgetItemChanged(QListWidgetItem *current,
         //ui->nothingHereFrame->setHidden(true);
         break;
     }
-}
-
-void MainWindow::onSendButtonReleased()
-{
-//    qDebug() << "On send button released";
-//    std::vector<Path> photoPaths;
-//    for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); it++)
-//        photoPaths.push_back(it->first);
-
-//    if (ui->messageEdit->toPlainText().isEmpty() && photoPaths.empty())
-//    {
-//        QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
-//        return;
-//    }
-
-//    if (mRepository->getGroupData().isEmpty())
-//    {
-//        QMessageBox::warning(this, tr("VK Sender"), tr("Список групп пуст."));
-//        return;
-//    }
-
-//    mSendingProgress->open();
-//    emit messageSent(ui->messageEdit->toPlainText(), photoPaths);
-}
-
-void MainWindow::onGroupDataUpdated()
-{
-//    ui->groupList->clear();
-
-//    for (const auto &group : mRepository->getGroupData())
-//    {
-//        QFrame *groupFrame = new QFrame(ui->groupList);
-//        groupFrame->setStyleSheet("border: 1px solid blue;"
-//                                  "background-color: gray;"
-//                                  "border-radius: 4px;");
-
-//        QLayout *groupFrameLayout = new QHBoxLayout(this);
-
-//        QLabel *vkLinkLabel = new QLabel(group.name);
-//        vkLinkLabel->setAlignment(Qt::AlignRight);
-//        vkLinkLabel->setStyleSheet("margin: 5px;"
-//                                   "color:blue;");
-
-//        groupFrameLayout->addWidget(vkLinkLabel);
-//        groupFrame->setLayout(groupFrameLayout);
-
-//        QListWidgetItem* item = new QListWidgetItem( ui->groupList );
-//        item->setSizeHint( groupFrame->sizeHint() );
-//        ui->groupList->setItemWidget( item, groupFrame );
-//    }
-//    qDebug() << "group data updated";
 }
 
 void MainWindow::onChangeAccountButtonReleased()
@@ -430,7 +390,18 @@ void MainWindow::setTabs()
 
     mLaunchedWidget = new LaunchedWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mLaunchedWidget);
-
+    connect(mLaunchedWidget, &LaunchedWidget::sendingFinished,
+            [&](SendingResult result)
+    {
+        hideAllTabs();
+        for(int i = 0; i < ui->interfaceListWidget->count(); ++i)
+            if (ui->interfaceListWidget->item(i)->data(Qt::UserRole).toInt() == Finished)
+                ui->interfaceListWidget->item(i)->setCheckState(Qt::Checked);
+            else
+                ui->interfaceListWidget->item(i)->setCheckState(Qt::Unchecked);
+        mLaunchedWidget->show();
+        mFinishedWidget->addFinishedItem(result);
+    });
 
     mWaitingWidget = new WaitingWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mWaitingWidget);
@@ -444,20 +415,14 @@ void MainWindow::setTabs()
     connect(mWaitingWidget, &WaitingWidget::launchSending,
             [&](MessagePack message)
     {
-        mLaunchedWidget->addLaunchedItem(message);
         hideAllTabs();
         for(int i = 0; i < ui->interfaceListWidget->count(); ++i)
-        {
-            if (ui->interfaceListWidget->item(i)->data(Qt::UserRole) == Launched)
-            {
+            if (ui->interfaceListWidget->item(i)->data(Qt::UserRole).toInt() == Launched)
                 ui->interfaceListWidget->item(i)->setCheckState(Qt::Checked);
-            }
             else
-            {
                 ui->interfaceListWidget->item(i)->setCheckState(Qt::Unchecked);
-            }
-        }
         mLaunchedWidget->show();
+        mLaunchedWidget->addLaunchedItem(message);
     });
 
     //Здесь должен быть Settings widget

@@ -14,21 +14,9 @@ class Repository : public QObject
 public:
     Repository();
     ~Repository();
-    void clearAll();
 
-    void serialize(const QString fileName);
-    void deserialize(const QString fileName);
-
-    void setGroupData(const QVector<Group> groups);
-    QVector<Group> getGroupData() const;
-
-signals:
-    void groupDataUpdated();
-
-private:
-    QVector<Group> mGroups;
-
-    //QVector<QPair<Message, QVector<Group>>> mSendingVector;
+    void serialize(const QVector<MessagePack> messages, const QString fileName);
+    QVector<MessagePack> deserialize(const QString fileName);
 };
 
 #endif // REPOSITORY_H

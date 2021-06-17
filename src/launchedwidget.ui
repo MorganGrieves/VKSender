@@ -114,32 +114,6 @@ border-radius: 4px;</string>
            </layout>
           </widget>
          </item>
-         <item>
-          <widget class="QLabel" name="requestCountLabel">
-           <property name="font">
-            <font>
-             <family>Roboto</family>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">color: black;</string>
-           </property>
-           <property name="text">
-            <string>Оставшиеся запросы: 101010</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="maxRequestsLabel">
-           <property name="styleSheet">
-            <string notr="true">color:#C0c0c0;</string>
-           </property>
-           <property name="text">
-            <string>Максимум: 1000</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
@@ -185,7 +159,7 @@ border-radius: 4px;</string>
            <x>0</x>
            <y>0</y>
            <width>574</width>
-           <height>295</height>
+           <height>335</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2"/>

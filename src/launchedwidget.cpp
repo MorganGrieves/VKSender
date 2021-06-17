@@ -6,6 +6,9 @@ LaunchedWidget::LaunchedWidget(QWidget *parent) :
     ui(new Ui::LaunchedWidget)
 {
     ui->setupUi(this);
+
+    ui->listWidget->layout()->setAlignment(Qt::AlignTop);
+
 }
 
 void LaunchedWidget::setFetcher(const std::shared_ptr<Fetcher> fetcher)
@@ -16,6 +19,13 @@ void LaunchedWidget::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 void LaunchedWidget::addLaunchedItem(const MessagePack &pack)
 {
     LaunchedListWidgetItem *item = new LaunchedListWidgetItem(this);
+    connect(item, &LaunchedListWidgetItem::sendingFinished,
+            [this](SendingResult result)
+    {
+        sender()->deleteLater();
+
+        emit sendingFinished(result);
+    });
     item->setFetcher(mFetcher);
     item->setMessagePackAndLaunch(pack);
     ui->listWidget->layout()->addWidget(item);

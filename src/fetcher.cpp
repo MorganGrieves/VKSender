@@ -415,8 +415,12 @@ void Fetcher::sendMessage(const MessagePack &pack)
                             throw "vkApi.photos.saveWallPhoto";
                         }
 
-                        qDebug() << "wall post: " << wallPostReply->readAll();
-                        emit sentMessage(pack.id, group.first);
+                        QString postIdInfo = QString::number(document.object().value("response").toObject()["post_id"].toInt());
+
+                        qDebug() << "vkApi.photos.getWallUploadServer" << postIdInfo;
+
+                        qDebug() << "wall post: " << postIdInfo;
+                        emit sentMessage(pack.id, group.first, postIdInfo);
                         wallPostReply->deleteLater();
                     });
 
@@ -483,7 +487,7 @@ void Fetcher::onPostDelete(const QString postId, const QString ownerId)
         else
         {
             qCritical() << "error vkApi.wallDelete error finished:"
-                        << postId << ownerId;
+                        << postId << ownerId << document.object()["response"];
             reply->deleteLater();
             return;
         }

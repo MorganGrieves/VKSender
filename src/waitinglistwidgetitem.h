@@ -28,6 +28,7 @@ public:
     void showItemEdit();
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
+    void setMessagePack(MessagePack message);
 
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;

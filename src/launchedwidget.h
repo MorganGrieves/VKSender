@@ -15,6 +15,9 @@ class LaunchedWidget : public QWidget
 {
     Q_OBJECT
 
+signals:
+    void sendingFinished(SendingResult result);
+
 public:
     explicit LaunchedWidget(QWidget *parent = nullptr);
     ~LaunchedWidget();
@@ -25,7 +28,6 @@ public:
 private:
     Ui::LaunchedWidget *ui;
 
-    std::vector<LaunchedListWidgetItem *> mLaunchedListItemList;
     std::shared_ptr<Fetcher> mFetcher = nullptr;
 };
 

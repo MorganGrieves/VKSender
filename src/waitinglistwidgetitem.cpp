@@ -37,6 +37,11 @@ void WaitingListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
     mEditItem->setFetcher(fetcher);
 }
 
+void WaitingListWidgetItem::setMessagePack(MessagePack message)
+{
+    mEditItem->setMessagePack(message);
+}
+
 void WaitingListWidgetItem::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
@@ -73,7 +78,6 @@ void WaitingListWidgetItem::onLaunchButtonReleased()
     {
         emit launchSending(itemEdit->getMessageInfo());
     }
-
 }
 
 void WaitingListWidgetItem::onBackButtonReleased()
