@@ -29,6 +29,7 @@ private:
 
     std::shared_ptr<Fetcher> mFetcher = nullptr;
     SendingResult mResult;
+    MessagePack mMessage;
 
     size_t mOperationsAmount = 0;
 };

@@ -63,14 +63,10 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(const WaitingListWidgetItem
     WaitingListWidgetItemEdit(nullptr)
 {
     if (QStandardItemModel *itemModel = static_cast<QStandardItemModel *>(item.mGroupList->model()))
-    {
         for(int i = 0; i < item.mGroupList->model()->rowCount(); ++i)
-            static_cast<QStandardItemModel *>(mGroupList->model())->appendRow(itemModel->item(i)->clone());
-    }
+            static_cast<QStandardItemModel *>(mGroupList->model())->appendRow(itemModel->item(i)->clone());    
 
     mFetcher = item.mFetcher;
-    connect(mFetcher.get(), &Fetcher::userGroupsUpdate,
-            this, &WaitingListWidgetItemEdit::onUserGroupsUpdate);
 
     for (const auto & photoPath : item.mPhotoPaths)
     {
@@ -80,27 +76,12 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(const WaitingListWidgetItem
     }
 
     ui->messageTextEdit->setMarkdown(item.ui->messageTextEdit->toMarkdown());
-
-    connect(ui->messageTextEdit, &QTextEdit::textChanged,
-            [&]()
-    {
-        mSaveFlag = true;
-    });
-
     ui->namePackLineEdit->setText(item.ui->namePackLineEdit->text());
 
-    connect(ui->namePackLineEdit, &QLineEdit::textChanged,
-            [&](const QString &)
-    {
-        mSaveFlag = true;
-    });
-
-    connect(mGroupList, &QListView::clicked,
-            [&](const QModelIndex &)
-    {
-        mSaveFlag = true;
-    });
-
+    connect(mFetcher.get(), &Fetcher::userGroupsUpdate, this, &WaitingListWidgetItemEdit::onUserGroupsUpdate);
+    connect(ui->messageTextEdit, &QTextEdit::textChanged, [this](){ mSaveFlag = true; });
+    connect(ui->namePackLineEdit, &QLineEdit::textChanged, [this](const QString &){ mSaveFlag = true; });
+    connect(mGroupList, &QListView::clicked, [this](const QModelIndex &)   { mSaveFlag = true; });
 }
 
 void WaitingListWidgetItemEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
@@ -119,8 +100,10 @@ QString WaitingListWidgetItemEdit::getPackName() const
 
 void WaitingListWidgetItemEdit::setMessagePack(MessagePack message)
 {
-    ui->namePackLineEdit->setText(message.title);
+    ui->namePackLineEdit->setText((message.title == "Нет названия") ? "" : message.title);
     ui->messageTextEdit->setText(message.message);
+
+    static_cast<QStandardItemModel *>(mGroupList->model())->clear();
 
     for (const auto &group : message.groups)
         addUserGroupListItem(group.first, group.second);
@@ -169,7 +152,10 @@ MessagePack WaitingListWidgetItemEdit::getMessageInfo() const
         }
 
     result.message = ui->messageTextEdit->toPlainText();
-    result.title = ui->namePackLineEdit->text();
+    result.title = ui->namePackLineEdit->text().isEmpty() ? "Нет названия"
+                                                          : ui->namePackLineEdit->text();
+
+
     for (const auto &[Path, _] : mPhotoPaths)
         result.photoPaths.push_back(Path);
 
@@ -197,6 +183,7 @@ void WaitingListWidgetItemEdit::onSaveButtonReleased()
 void WaitingListWidgetItemEdit::onCancelButtonReleased()
 {
     emit cancelButtonReleased();
+    emit backButtonReleased();
 }
 
 void WaitingListWidgetItemEdit::onUserGroupsUpdate()
@@ -245,7 +232,7 @@ void WaitingListWidgetItemEdit::onAddGroupButtonReleased()
     connect(mFetcher.get(), &Fetcher::onGroupUpdated,
             [&](Group group)
     {
-        if (group.canPost)
+        if (!group.canPost)
             addUserGroupListItem(group);
     });
 
@@ -269,12 +256,17 @@ void WaitingListWidgetItemEdit::onAddGroupButtonReleased()
 void WaitingListWidgetItemEdit::onBackButtonReleased()
 {
     if (mSaveFlag)
-        if (QMessageBox::question(this, "VKSender", "Сохранить все изменения?",
-                                  QMessageBox::Yes|QMessageBox::No)
-                == QMessageBox::Yes)
-        {
+    {
+        QMessageBox::StandardButton userAction =
+                QMessageBox::question(this, "VKSender", "Сохранить все изменения?",
+                                      QMessageBox::Yes|QMessageBox::No);
+
+        if (userAction == QMessageBox::Close)
+            return;
+
+        if (userAction == QMessageBox::Yes)
             emit saveButtonReleased();
-        }
+    }
 
     emit backButtonReleased();
 }
@@ -286,6 +278,20 @@ void WaitingListWidgetItemEdit::onLaunchButtonReleased()
         QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
         return;
     }
+    bool checked = false;
+    if (QStandardItemModel *itemModel = static_cast<QStandardItemModel *>(mGroupList->model()))
+    {
+        for(int i = 0; i < itemModel->rowCount(); ++i)
+            if (itemModel->item(i)->data(Qt::CheckStateRole) == Qt::Checked)
+                checked = true;
+
+        if (!checked)
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Не выбрана ни одна группа для рассылки"));
+            return;
+        }
+    }
+
     emit saveButtonReleased();
     emit launchButtonReleased();
 }
@@ -303,7 +309,7 @@ void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group, Qt::Che
     item->setData(group.vkid, GroupListDelegate::GROUP_ID);
     item->setData(group.canPost, GroupListDelegate::GROUP_CANPOST);
     item->setData(group.photo50Link, GroupListDelegate::GROUP_PHOTO50LINK);
-    item->setData(Qt::CheckStateRole, state);
+    item->setCheckState(state);
 
     item->setSizeHint(QSize(0, 60));
     model->appendRow(item);

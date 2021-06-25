@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>950</width>
-    <height>1020</height>
+    <height>1220</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -124,7 +124,7 @@
          <property name="minimumSize">
           <size>
            <width>230</width>
-           <height>1000</height>
+           <height>1200</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -339,8 +339,7 @@ border-radius: 4px;
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
                <property name="styleSheet">
-                <string notr="true">padding: 7px 16px 8px;
-margine: 10px;
+                <string notr="true">padding: 7px 16px;
 border-radius: 4px;
 background-color: #e2e9ef;
 color: #55677d;</string>

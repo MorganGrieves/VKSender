@@ -14,8 +14,7 @@ void GroupListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
             fontFamily = "Roboto";
     QPixmap groupIcon = index.data(GROUP_ICON).value<QPixmap>();
 
-    bool checked = index.data(Qt::CheckStateRole) == Qt::Checked,
-            hovered = option.state & QStyle::State_MouseOver;
+    bool checked = index.data(Qt::CheckStateRole) == Qt::Checked;
 
     QFont fntHeader(fontFamily, 9);
     QString colorGroupName = "black";

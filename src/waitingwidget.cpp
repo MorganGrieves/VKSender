@@ -16,6 +16,8 @@ WaitingWidget::WaitingWidget(QWidget *parent) :
 
     connect(ui->addListButton, &QPushButton::released,
             this, &WaitingWidget::onAddListButtonReleased);
+    connect(ui->loadListsButton, &QPushButton::released,
+            this, &WaitingWidget::onLoadListsButtonReleased);
 
     ui->listWidget->layout()->setAlignment(Qt::AlignTop);
 }
@@ -51,22 +53,7 @@ void WaitingWidget::addListItem(MessagePack message)
 
 void WaitingWidget::onDeleteButtonReleased()
 {
-//    std::vector<WaitingListWidgetItem *>::iterator widgetElement = std::find(mWaitingList.begin(),
-//                                                            mWaitingList.end(),
-//                                                            qobject_cast<WaitingListWidgetItem *>(sender()));
-
-//    if (widgetElement != mWaitingList.end())
-//        std::for_each(widgetElement + 1, mWaitingList.end(),
-//                      [](WaitingListWidgetItem x)
-//        {
-
-//        });
-
     sender()->deleteLater();
-    mWaitingListItemVector.erase(std::remove(mWaitingListItemVector.begin(),
-                                             mWaitingListItemVector.end(),
-                                             sender()),
-                                 mWaitingListItemVector.end());
     ui->packCounterLabel->setText(
                 QString::number(ui->listWidget->layout()->children().count()));
 }

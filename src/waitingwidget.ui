@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>515</width>
+    <width>605</width>
     <height>392</height>
    </rect>
   </property>
@@ -118,6 +118,34 @@ border-radius: 4px;</string>
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="saveListsButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <family>Roboto</family>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: 7px 16px 8px;
+border-radius: 4px;
+background-color: #e2e9ef;
+color: #55677d;</string>
+        </property>
+        <property name="text">
+         <string>Сохранить список</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="loadListsButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -125,15 +153,22 @@ border-radius: 4px;</string>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="font">
+         <font>
+          <family>Roboto</family>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
         <property name="styleSheet">
          <string notr="true">padding: 7px 16px 8px;
-margine: 10px;
 border-radius: 4px;
 background-color: #e2e9ef;
 color: #55677d;</string>
         </property>
         <property name="text">
-         <string>Загрузить списки</string>
+         <string>Загрузить список</string>
         </property>
        </widget>
       </item>
@@ -226,7 +261,7 @@ border-radius: 4px;</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>515</width>
+           <width>605</width>
            <height>331</height>
           </rect>
          </property>

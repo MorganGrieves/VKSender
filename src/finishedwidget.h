@@ -18,6 +18,7 @@ class FinishedWidget : public QWidget
 signals:
     void abortionFinished(MessagePack message);
     void finishedListWidgetItemReleased(FinishedListWidgetItemEdit *item);
+    void showWidget();
 
 public:
     explicit FinishedWidget(QWidget *parent = nullptr);
@@ -25,6 +26,7 @@ public:
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     void addFinishedItem(const SendingResult &result);
+    void onAbortionFinished(MessagePack message);
 
 private:
     Ui::FinishedWidget *ui;

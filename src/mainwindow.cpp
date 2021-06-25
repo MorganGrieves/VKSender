@@ -139,7 +139,6 @@ MainWindow::MainWindow(QWidget *parent)
             labelText += QString::number(lastEntrance.date().day()) + " "
                     + locale.toString(lastEntrance.date(), "MMMM") + " ";
         labelText += "в " + lastEntrance.toString("HH:mm") + " ";
-        qDebug() << labelText;
         ui->lastEntranceLabel->setText(labelText);
     }
 
@@ -152,21 +151,28 @@ MainWindow::MainWindow(QWidget *parent)
     mLaunchedWidget->setFetcher(mFetcher);
     mFinishedWidget->setFetcher(mFetcher);
 
-    connect(ui->interfaceListWidget, &QListWidget::currentItemChanged,
-            this, &MainWindow::onInterfaceListWidgetItemChanged);
+    connect(ui->interfaceListWidget, &QListWidget::itemClicked,
+            this, &MainWindow::onInterfaceListWidgetItemClicked);
 
     connect(mWaitingWidget, &WaitingWidget::waitingListWidgetItemReleased,
             [this](WaitingListWidgetItemEdit *item)
     {
         hideAllTabs();
+        mEditFormShowed = true;
         ui->tabFrame->layout()->addWidget(item);
+        ui->interfaceListWidget->clearSelection();
     });
 
     connect(mFinishedWidget, &FinishedWidget::finishedListWidgetItemReleased,
             [this](FinishedListWidgetItemEdit *item)
     {
         hideAllTabs();
-        ui->tabFrame->layout()->addWidget(item);
+        int index = ui->tabFrame->layout()->indexOf(item);
+        if(index == -1)
+            ui->tabFrame->layout()->addWidget(item);
+        else
+            ui->tabFrame->layout()->itemAt(index)->widget()->show();
+        ui->interfaceListWidget->clearSelection();
     });
     connect(mFinishedWidget, &FinishedWidget::abortionFinished,
             [this](MessagePack message)
@@ -268,10 +274,15 @@ void MainWindow::onUserNameUpdated()
     ui->accountNameLabel->setText(mFetcher->getUserName());
 }
 
-void MainWindow::onInterfaceListWidgetItemChanged(QListWidgetItem *current,
-                                                  QListWidgetItem *previous)
+void MainWindow::onInterfaceListWidgetItemClicked(QListWidgetItem *item)
 {
-    switch (current->data(Qt::UserRole).toInt())
+    if (mEditFormShowed)
+    {
+        ui->interfaceListWidget->clearSelection();
+        QMessageBox::warning(this, tr("VK Sender"), tr("Сохраните или отмените изменения в редакторе!"));
+        return;
+    }
+    switch (item->data(Qt::UserRole).toInt())
     {
     case Waiting:
         hideAllTabs();
@@ -381,12 +392,16 @@ void MainWindow::setTabs()
 
     mFinishedWidget = new FinishedWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mFinishedWidget);
-//    connect(mFinishedWidget, &FinishedWidget::showWidget,
-//            [&]()
-//    {
-//        hideAllTabs();
-//        mFinishedWidget->show();
-//    });
+    connect(mFinishedWidget, &FinishedWidget::showWidget,
+            [this]()
+    {
+        hideAllTabs();
+        ui->interfaceListWidget->selectionModel()->select(
+                    ui->interfaceListWidget->model()->index(1, 0),
+                    QItemSelectionModel::Clear | QItemSelectionModel::Select);
+
+        mFinishedWidget->show();
+    });
 
     mLaunchedWidget = new LaunchedWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mLaunchedWidget);
@@ -394,13 +409,12 @@ void MainWindow::setTabs()
             [&](SendingResult result)
     {
         hideAllTabs();
-        for(int i = 0; i < ui->interfaceListWidget->count(); ++i)
-            if (ui->interfaceListWidget->item(i)->data(Qt::UserRole).toInt() == Finished)
-                ui->interfaceListWidget->item(i)->setCheckState(Qt::Checked);
-            else
-                ui->interfaceListWidget->item(i)->setCheckState(Qt::Unchecked);
-        mLaunchedWidget->show();
+        ui->interfaceListWidget->clearSelection();
+        ui->interfaceListWidget->selectionModel()->select(
+                    ui->interfaceListWidget->model()->index(1, 0),
+                    QItemSelectionModel::Clear | QItemSelectionModel::Select);
         mFinishedWidget->addFinishedItem(result);
+        mFinishedWidget->show();
     });
 
     mWaitingWidget = new WaitingWidget(ui->tabFrame);
@@ -410,17 +424,20 @@ void MainWindow::setTabs()
             [&]()
     {
         hideAllTabs();
+        mEditFormShowed = false;
+        ui->interfaceListWidget->selectionModel()->select(
+                    ui->interfaceListWidget->model()->index(0, 0),
+                    QItemSelectionModel::Clear | QItemSelectionModel::Select);
         mWaitingWidget->show();
     });
     connect(mWaitingWidget, &WaitingWidget::launchSending,
             [&](MessagePack message)
     {
         hideAllTabs();
-        for(int i = 0; i < ui->interfaceListWidget->count(); ++i)
-            if (ui->interfaceListWidget->item(i)->data(Qt::UserRole).toInt() == Launched)
-                ui->interfaceListWidget->item(i)->setCheckState(Qt::Checked);
-            else
-                ui->interfaceListWidget->item(i)->setCheckState(Qt::Unchecked);
+        mEditFormShowed = false;
+        ui->interfaceListWidget->selectionModel()->select(
+                    ui->interfaceListWidget->model()->index(2, 0),
+                    QItemSelectionModel::Clear | QItemSelectionModel::Select);
         mLaunchedWidget->show();
         mLaunchedWidget->addLaunchedItem(message);
     });

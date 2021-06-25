@@ -20,6 +20,7 @@ class FinishedListWidgetItemEdit : public QWidget
     Q_OBJECT
 signals:
     void backToWaiting(MessagePack message);
+    void backButtonReleased();
 
 public:
     explicit FinishedListWidgetItemEdit(QWidget *parent = nullptr);
@@ -31,6 +32,7 @@ public:
 private slots:
     void onCancelButtonReleased();
     void onBackToWaitingButtonReleased();
+    void onBackButtonReleased();
 
 private:
     Ui::FinishedListWidgetItemEdit *ui;

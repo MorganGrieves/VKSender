@@ -280,7 +280,7 @@ border-bottom-right-radius: 4px;
                      <string notr="true">color:#C0C0C0;</string>
                     </property>
                     <property name="text">
-                     <string>Получатели: 100</string>
+                     <string>Получатели: 0</string>
                     </property>
                    </widget>
                   </item>

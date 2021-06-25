@@ -68,11 +68,11 @@ void SendingProgress::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 
 void SendingProgress::onMessageSent(QString text, std::vector<Path> photoPaths)
 {
-    int operations = photoPaths.size() * mRepository->getGroupData().size() + mRepository->getGroupData().size();
-    qDebug() << "The whole amount of sending operations(photos and message):" << operations;
-    ui->progressBar->setMaximum(operations);
-    ui->resultLabel->setText("");
-    ui->progressBar->setValue(0);
-    sentMessages = 0;
-    emit messageSent(text, photoPaths);
+    //int operations = photoPaths.size() * mRepository->getGroupData().size() + mRepository->getGroupData().size();
+//    qDebug() << "The whole amount of sending operations(photos and message):" << operations;
+//    ui->progressBar->setMaximum(operations);
+//    ui->resultLabel->setText("");
+//    ui->progressBar->setValue(0);
+//    sentMessages = 0;
+//    emit messageSent(text, photoPaths);
 }

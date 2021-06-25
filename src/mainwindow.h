@@ -58,8 +58,7 @@ private slots:
     void onProfilePictureUpdated();
     void onUserNameUpdated();
 
-    void onInterfaceListWidgetItemChanged(QListWidgetItem *current,
-                                          QListWidgetItem *previous);
+    void onInterfaceListWidgetItemClicked(QListWidgetItem *item);
 
     void onChangeAccountButtonReleased();
 
@@ -84,5 +83,7 @@ private:
     WaitingWidget *mWaitingWidget = nullptr;
     FinishedWidget *mFinishedWidget = nullptr;
     LaunchedWidget *mLaunchedWidget = nullptr;
+
+    bool mEditFormShowed = false;
 };
 #endif // MAINWINDOW_H

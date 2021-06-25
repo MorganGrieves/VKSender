@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QMouseEvent>
 
+#include "types.h"
 #include "fetcher.h"
 #include "finishedlistwidgetitemedit.h"
 
@@ -18,6 +19,7 @@ class FinishedListWidgetItem : public QWidget
 signals:
     void finishedListWidgetItemReleased(FinishedListWidgetItemEdit *item);
     void backToWaiting(MessagePack message);
+    void showFinishedWidget();
 
 public:
     explicit FinishedListWidgetItem(QWidget *parent = nullptr);
@@ -32,6 +34,7 @@ protected:
 
 private slots:
     void onBackToWaitingButtonReleased();
+    void onBackButtonReleased();
 
 private:
     Ui::FinishedListWidgetItem *ui;

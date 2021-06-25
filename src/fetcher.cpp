@@ -114,67 +114,6 @@ const QVector<Group> &Fetcher::getUserGroups() const
     return mUserInfo.userGroups;
 }
 
-void Fetcher::onGroupDataNeed(const std::vector<Link> links)
-{
-    vkApi.groupById.groupIds = "";
-    for (const auto &link : links)
-        vkApi.groupById.groupIds = vkApi.groupById.groupIds + link + ",";
-
-    QUrl requestUrl(mVkApiLink
-                    + vkApi.groupById.method);
-
-    QUrlQuery params;
-    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
-    params.addQueryItem("v", vkApi.apiVersion);
-    params.addQueryItem("fields", vkApi.groupById.fields);
-    params.addQueryItem("group_ids", vkApi.groupById.groupIds);
-    requestUrl.setQuery(params.query());
-
-    QNetworkRequest request;
-    request.setUrl(requestUrl);
-
-    QNetworkReply *reply = mNetworkManager->get(request);
-
-    connect(reply, &QNetworkReply::finished,
-            [reply, this]()
-    {
-        QJsonParseError parseError;
-        const auto data = reply->readAll();
-        const auto document = QJsonDocument::fromJson(data, &parseError);
-
-        if (isJsonErrorReturned(parseError)
-                || isServerErrorReturned(document)
-                || isReplyErrorReturned(*reply))
-        {
-            qDebug() << "error vkApi.groupById.groupIds";
-            reply->deleteLater();
-            return;
-        }
-
-        const QJsonArray jsonResponse = document.object()["response"].toArray();
-        qDebug() << jsonResponse;
-
-        QVector<Group> groups;
-
-        foreach (const QJsonValue &value, jsonResponse)
-        {
-            QJsonObject groupInfo = value.toObject();
-
-            Group group;
-            group.vkid = QString::number(groupInfo["id"].toDouble(), 'f', 0);
-            group.name = groupInfo["name"].toString();
-            group.screenName = groupInfo["screen_name"].toString();
-            group.photo50Link = groupInfo["photo_50"].toString();
-            group.photo50 = *uploadPhoto(QUrl(group.photo50Link));
-            group.canPost = groupInfo["can_post"].toBool();
-            groups.push_back(group);
-        }
-
-        emit updatedGroupData(groups);       
-        reply->deleteLater();
-    });
-}
-
 void Fetcher::sendMessage(const MessagePack &pack)
 {
     QEventLoop *groupLoop = new QEventLoop(this);
@@ -419,7 +358,6 @@ void Fetcher::sendMessage(const MessagePack &pack)
 
                         qDebug() << "vkApi.photos.getWallUploadServer" << postIdInfo;
 
-                        qDebug() << "wall post: " << postIdInfo;
                         emit sentMessage(pack.id, group.first, postIdInfo);
                         wallPostReply->deleteLater();
                     });
@@ -646,7 +584,6 @@ void Fetcher::downloadUserGroups()
         qDebug() << "vk.groupsGet" << jsonResponse;
 
         QVector<Group> groups;
-        qDebug() << jsonResponse["count"].toInt();
         const QJsonArray groupJsonArray = jsonResponse["items"].toArray();
 
         foreach (const QJsonValue &value, groupJsonArray)

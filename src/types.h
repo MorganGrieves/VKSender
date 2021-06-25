@@ -43,7 +43,7 @@ struct SendingResult
     QVector<Group> errorGroups;
 };
 
-QDataStream &operator<<(QDataStream &, const Group &);
-QDataStream &operator>>(QDataStream &, Group &);
+QDataStream &operator<<(QDataStream &, const MessagePack &);
+QDataStream &operator>>(QDataStream &, MessagePack &);
 
 #endif // TYPES_H

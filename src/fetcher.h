@@ -125,7 +125,6 @@ public:
     void sendMessage(const MessagePack &pack);
 
 public slots:
-    void onGroupDataNeed(const std::vector<Link> links);
     void onPostDelete(const QString postId, const QString ownerId);
     void onUserDataUpdate();
 

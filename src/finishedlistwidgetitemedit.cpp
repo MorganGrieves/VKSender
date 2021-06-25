@@ -14,6 +14,8 @@ FinishedListWidgetItemEdit::FinishedListWidgetItemEdit(QWidget *parent) :
             this, &FinishedListWidgetItemEdit::onCancelButtonReleased);
     connect(ui->backToWaitingButton, &QPushButton::released,
             this, &FinishedListWidgetItemEdit::onBackToWaitingButtonReleased);
+    connect(ui->backButton, &QPushButton::released,
+            this, &FinishedListWidgetItemEdit::onBackButtonReleased);
 }
 
 void FinishedListWidgetItemEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
@@ -44,13 +46,18 @@ void FinishedListWidgetItemEdit::setSendingResult(SendingResult result)
 void FinishedListWidgetItemEdit::onCancelButtonReleased()
 {
     for (const auto &[group, postNumber] : mResult.successfulGroups)
-        mFetcher->onPostDelete(postNumber, group.name);
+        mFetcher->onPostDelete(postNumber, group.vkid);
     qDeleteAll(ui->noErrorGroupList->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
 }
 
 void FinishedListWidgetItemEdit::onBackToWaitingButtonReleased()
 {
     emit backToWaiting(mResult.message);
+}
+
+void FinishedListWidgetItemEdit::onBackButtonReleased()
+{
+    emit backButtonReleased();
 }
 
 FinishedListWidgetItemEdit::~FinishedListWidgetItemEdit()

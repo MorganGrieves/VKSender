@@ -28,7 +28,6 @@ GroupTableEdit::GroupTableEdit(QWidget *parent) :
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, [=]()
     {
         qDebug() << "QDialogButtonBox accepted";
-        mRepository->setGroupData(mGroups);
         this->close();
     });
 
@@ -64,15 +63,13 @@ void GroupTableEdit::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 {
     mFetcher = fetcher;
 
-    connect(this, &GroupTableEdit::sendGroupLinks,
-            mFetcher.get(), &Fetcher::onGroupDataNeed);
+//    connect(this, &GroupTableEdit::sendGroupLinks,
+//            mFetcher.get(), &Fetcher::onGroupDataNeed);
 }
 
 void GroupTableEdit::setRepository(const std::shared_ptr<Repository> repository)
 {
     mRepository = repository;
-    for (const auto &group : mRepository->getGroupData())
-        addGroupFrame(group);
 }
 
 void GroupTableEdit::addGroupFrame(Group group)

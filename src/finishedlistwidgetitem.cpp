@@ -26,6 +26,8 @@ void FinishedListWidgetItem::setSendingResult(SendingResult result)
     mFinishedEdit->setSendingResult(result);
     connect(mFinishedEdit, &FinishedListWidgetItemEdit::backToWaiting,
             this, &FinishedListWidgetItem::backToWaiting);
+    connect(mFinishedEdit, &FinishedListWidgetItemEdit::backButtonReleased,
+            this, &FinishedListWidgetItem::onBackButtonReleased);
 }
 
 void FinishedListWidgetItem::showItemEdit()
@@ -42,10 +44,15 @@ void FinishedListWidgetItem::mouseReleaseEvent(QMouseEvent *event)
 void FinishedListWidgetItem::onBackToWaitingButtonReleased()
 {
     emit backToWaiting(mSendingResult.message);
-    this->deleteLater();
+}
+
+void FinishedListWidgetItem::onBackButtonReleased()
+{
+    emit showFinishedWidget();
 }
 
 FinishedListWidgetItem::~FinishedListWidgetItem()
 {
+    mFinishedEdit->deleteLater();
     delete ui;
 }

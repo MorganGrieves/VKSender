@@ -18,13 +18,21 @@ void FinishedWidget::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 void FinishedWidget::addFinishedItem(const SendingResult &result)
 {
     FinishedListWidgetItem *item = new FinishedListWidgetItem(this);
+    item->setFetcher(mFetcher);
     connect(item, &FinishedListWidgetItem::finishedListWidgetItemReleased,
             this, &FinishedWidget::finishedListWidgetItemReleased);
     connect(item, &FinishedListWidgetItem::backToWaiting,
-            this, &FinishedWidget::abortionFinished);
-    ui->listWidget->layout()->addWidget(item);
-    item->setFetcher(mFetcher);
+            this, &FinishedWidget::onAbortionFinished);
+    connect(item, &FinishedListWidgetItem::showFinishedWidget,
+            this, &FinishedWidget::showWidget);
     item->setSendingResult(result);
+    ui->listWidget->layout()->addWidget(item);
+}
+
+void FinishedWidget::onAbortionFinished(MessagePack message)
+{
+    sender()->deleteLater();
+    emit abortionFinished(message);
 }
 
 FinishedWidget::~FinishedWidget()

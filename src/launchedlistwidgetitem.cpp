@@ -17,21 +17,24 @@ void LaunchedListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 
 void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
 {
+    mMessage = message;
+
     connect(mFetcher.get(), &Fetcher::updatedPhoto,
-            [&](QUuid id)
+            [this](QUuid id)
     {
-        if (id == message.id)
+        if (id == mMessage.id)
         {
             ui->progressBar->setValue(ui->progressBar->value() + 1);
         }
     });
 
     connect(mFetcher.get(), &Fetcher::sentMessage,
-            [&](QUuid id, Group group, PostNumber number)
+            [this](QUuid id, Group group, PostNumber number)
     {
-        if (id == message.id)
+        if (id == mMessage.id)
         {
-            mResult.successfulGroups.push_back(QPair(group, number));
+            QPair groupAndPost(group, number);
+            mResult.successfulGroups.push_back(groupAndPost);
             mResult.errorGroups.erase(std::remove_if(mResult.errorGroups.begin(),
                                                      mResult.errorGroups.end(),
                                                      [&](Group errorGroup)
@@ -43,12 +46,13 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
     });
 
     connect(mFetcher.get(), &Fetcher::sendingFinished,
-            [&](QUuid id)
+            [this](QUuid id)
     {
-        if (id == message.id)
+        if (id == mMessage.id)
         {
             ui->progressBar->setValue(mOperationsAmount);
-            emit sendingFinished(mResult);
+            emit sendingFinished(mResult);         
+            disconnect(this, nullptr, nullptr, nullptr);
         }
     });
 
@@ -77,7 +81,7 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
     ui->progressBar->setMaximum(mOperationsAmount);
     ui->topicLabel->setText(message.title);
     mResult.message = message;
-    mFetcher->sendMessage(message);
+    mFetcher->sendMessage(mMessage);
 }
 
 LaunchedListWidgetItem::~LaunchedListWidgetItem()
