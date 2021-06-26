@@ -32,6 +32,15 @@ void FinishedListWidgetItemEdit::setSendingResult(SendingResult result)
         item->setFetcher(mFetcher);
         item->setGroup(group);
         item->setPostNumber(postNumber);
+        connect(item, &NoErrorGroupItem::abortButtonReleased,
+                [this](const Group &group)
+        {
+            mResult.successfulGroups.erase(
+                        std::remove_if(mResult.successfulGroups.begin(),
+                                       mResult.successfulGroups.end(),
+                                       [group](QPair<Group, QString> &pair)
+                                       { return pair.first.vkid == group.vkid; }));
+        });
         ui->noErrorGroupList->layout()->addWidget(item);
     }
 

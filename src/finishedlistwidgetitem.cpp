@@ -24,6 +24,11 @@ void FinishedListWidgetItem::setSendingResult(SendingResult result)
     mSendingResult = result;
     mFinishedEdit->setFetcher(mFetcher);
     mFinishedEdit->setSendingResult(result);
+
+    ui->sentGroupsLabel->setText("Разослано: " + QString::number(result.successfulGroups.count()));
+    ui->notSentGroupsLabel->setText("Ошибок: " + QString::number(result.errorGroups.count()));
+    ui->topicLabel->setText(result.message.title);
+
     connect(mFinishedEdit, &FinishedListWidgetItemEdit::backToWaiting,
             this, &FinishedListWidgetItem::backToWaiting);
     connect(mFinishedEdit, &FinishedListWidgetItemEdit::backButtonReleased,

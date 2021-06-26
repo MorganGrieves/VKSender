@@ -40,6 +40,17 @@ void WaitingListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 void WaitingListWidgetItem::setMessagePack(MessagePack message)
 {
     mEditItem->setMessagePack(message);
+
+    ui->dateLabel->setText(message.dateCreation);
+    ui->topicLabel->setText(message.title);
+
+}
+
+MessagePack WaitingListWidgetItem::getMessagePack() const
+{
+    MessagePack message = mEditItem->getMessageInfo();
+    message.dateCreation = ui->dateLabel->text();
+    return message;
 }
 
 void WaitingListWidgetItem::mouseReleaseEvent(QMouseEvent *event)
@@ -75,9 +86,7 @@ void WaitingListWidgetItem::onLaunchButtonReleased()
 {
     if (WaitingListWidgetItemEdit *itemEdit
             = qobject_cast<WaitingListWidgetItemEdit *>(sender()))
-    {
         emit launchSending(itemEdit->getMessageInfo());
-    }
 }
 
 void WaitingListWidgetItem::onBackButtonReleased()

@@ -29,6 +29,7 @@ public:
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     void setMessagePack(MessagePack message);
+    MessagePack getMessagePack() const;
 
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;

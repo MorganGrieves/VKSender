@@ -26,13 +26,21 @@ void FinishedWidget::addFinishedItem(const SendingResult &result)
     connect(item, &FinishedListWidgetItem::showFinishedWidget,
             this, &FinishedWidget::showWidget);
     item->setSendingResult(result);
-    ui->listWidget->layout()->addWidget(item);
+    ui->listWidget->layout()->addWidget(item);    
+    ui->packCounterLabel->setNum(listSize());
 }
 
 void FinishedWidget::onAbortionFinished(MessagePack message)
 {
-    sender()->deleteLater();
+    delete sender();
+    ui->listWidget->layout()->update();
+    ui->packCounterLabel->setNum(listSize());
     emit abortionFinished(message);
+}
+
+int FinishedWidget::listSize() const
+{
+    return ui->listWidget->layout()->count();
 }
 
 FinishedWidget::~FinishedWidget()

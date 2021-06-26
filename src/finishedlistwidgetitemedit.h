@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QEvent>
+#include <QPair>
 
 #include "fetcher.h"
 #include "noerrorgroupitem.h"

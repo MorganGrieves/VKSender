@@ -19,6 +19,7 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
 {
     mMessage = message;
 
+
     connect(mFetcher.get(), &Fetcher::updatedPhoto,
             [this](QUuid id)
     {
@@ -51,8 +52,7 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
         if (id == mMessage.id)
         {
             ui->progressBar->setValue(mOperationsAmount);
-            emit sendingFinished(mResult);         
-            disconnect(this, nullptr, nullptr, nullptr);
+            emit sendingFinished(mResult);
         }
     });
 

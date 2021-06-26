@@ -115,8 +115,6 @@ void WaitingListWidgetItemEdit::setMessagePack(MessagePack message)
         ui->photoListWidget->addItem(listItem);
         mPhotoPaths[fileName] = listItem;
     }
-
-    emit saveButtonReleased();
 }
 
 int WaitingListWidgetItemEdit::getCheckedGroupsNumber()

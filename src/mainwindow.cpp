@@ -151,6 +151,8 @@ MainWindow::MainWindow(QWidget *parent)
     mLaunchedWidget->setFetcher(mFetcher);
     mFinishedWidget->setFetcher(mFetcher);
 
+    mWaitingWidget->setRepository(mRepository);
+
     connect(ui->interfaceListWidget, &QListWidget::itemClicked,
             this, &MainWindow::onInterfaceListWidgetItemClicked);
 
@@ -203,49 +205,6 @@ MainWindow::MainWindow(QWidget *parent)
             mFetcher->onUserDataUpdate();
         }
     });
-
-//    connect(ui->openAction, &QAction::triggered,
-//            [this](bool)
-//    {
-//        QMessageBox::StandardButton reply;
-//        reply = QMessageBox::question(this, "VKSender", "Сохранить список групп?",
-//                                      QMessageBox::Yes|QMessageBox::No);
-//        if (reply == QMessageBox::Yes)
-//        {
-//            QString saveFileName = QFileDialog::getSaveFileName(0, "Сохранить", "",
-//                                                        tr("VKSender Files (*.vks)"));
-//            if (!saveFileName.isEmpty())
-//                mRepository->serialize(saveFileName);
-
-//            QString openFileName = QFileDialog::getOpenFileName(0, "Открыть", "",
-//                                                        tr("VKSender Files (*.vks)"));
-//            if (!openFileName.isEmpty())
-//                mRepository->deserialize(openFileName);
-//        }
-//        else
-//        {
-//            QString openFileName = QFileDialog::getOpenFileName(0, "Открыть", "",
-//                                                        tr("VKSender Files (*.vks)"));
-//            if (!openFileName.isEmpty())
-//                mRepository->deserialize(openFileName);
-//        }
-//    });
-
-//    connect(ui->saveAction, &QAction::triggered,
-//            [this](bool)
-//    {
-//        QString saveFileName = QFileDialog::getSaveFileName(0, "Сохранить", "",
-//                                                    tr("VKSender Files (*.vks)"));
-//        if (!saveFileName.isEmpty())
-//            mRepository->serialize(saveFileName);
-//    });
-
-//    connect(ui->exitAction, &QAction::triggered,
-//            [this](bool)
-//    {
-//        qApp->quit();
-//    });
-
 }
 
 MainWindow::~MainWindow()
@@ -441,7 +400,34 @@ void MainWindow::setTabs()
         mLaunchedWidget->show();
         mLaunchedWidget->addLaunchedItem(message);
     });
-
+    connect(mWaitingWidget, &WaitingWidget::loadListsButtonRelease,
+            [this]()
+    {
+        if (mFinishedWidget->listSize() + mLaunchedWidget->listSize() > 0)
+        {
+            QMessageBox::StandardButton userAction =
+                    QMessageBox::question(this, "VKSender", "Выполняется рассылка. Все равно загрузить?",
+                                          QMessageBox::Yes|QMessageBox::No);
+            if (userAction == QMessageBox::Yes)
+                mWaitingWidget->loadLists();
+            return;
+        }
+        mWaitingWidget->loadLists();
+    });
+    connect(mWaitingWidget, &WaitingWidget::saveListsButtonRelease,
+            [this]()
+    {
+        if (mFinishedWidget->listSize() + mLaunchedWidget->listSize() > 0)
+        {
+            QMessageBox::StandardButton userAction =
+                    QMessageBox::question(this, "VKSender", "Выполняется рассылка. Все равно сохранить?",
+                                          QMessageBox::Yes|QMessageBox::No);
+            if (userAction == QMessageBox::Yes)
+                mWaitingWidget->saveLists();
+            return;
+        }
+        mWaitingWidget->saveLists();
+    });
     //Здесь должен быть Settings widget
 }
 

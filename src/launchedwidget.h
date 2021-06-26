@@ -25,6 +25,8 @@ public:
     void setFetcher(const std::shared_ptr<Fetcher> fecther);
     void addLaunchedItem(const MessagePack &pack);
 
+    int listSize() const;
+
 private:
     Ui::LaunchedWidget *ui;
 

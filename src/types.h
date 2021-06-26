@@ -23,17 +23,20 @@ struct Group
     Link photo50Link = "";
     QPixmap photo50;
     bool canPost = false;
+    int version = 1;
 };
 
 struct MessagePack
 {
-    QUuid id;
-    QString title;
+    QUuid id = "";
+    QString title = "";
+    QString dateCreation = "";
+    QString message = "";
     QVector<QPair<Group, Qt::CheckState>> groups;
     QVector<Path> photoPaths;
     QVector<Path> videoPaths;
     QVector<Path> filePaths;
-    QString message;
+    int version = 1;
 };
 
 struct SendingResult

@@ -28,6 +28,8 @@ public:
     void addFinishedItem(const SendingResult &result);
     void onAbortionFinished(MessagePack message);
 
+    int listSize() const;
+
 private:
     Ui::FinishedWidget *ui;
 

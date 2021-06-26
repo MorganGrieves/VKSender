@@ -21,16 +21,22 @@ void LaunchedWidget::addLaunchedItem(const MessagePack &pack)
     LaunchedListWidgetItem *item = new LaunchedListWidgetItem(this);
     item->setFetcher(mFetcher);
     ui->listWidget->layout()->addWidget(item);
-    ui->packCounterLabel->setText(
-                QString::number(ui->listWidget->layout()->children().count()));
+    ui->packCounterLabel->setNum(listSize());
     connect(item, &LaunchedListWidgetItem::sendingFinished,
             [this, item](SendingResult result)
    {
-        item->deleteLater();
+        delete item;
+        ui->listWidget->layout()->update();
+        ui->packCounterLabel->setNum(listSize());
         emit sendingFinished(result);
     });
 
     item->setMessagePackAndLaunch(pack);
+}
+
+int LaunchedWidget::listSize() const
+{
+    return ui->listWidget->layout()->count();
 }
 
 LaunchedWidget::~LaunchedWidget()
