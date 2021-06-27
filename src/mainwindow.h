@@ -14,6 +14,7 @@
 #include "greetingwidget.h"
 #include "types.h"
 #include "waitinglistwidgetitemedit.h"
+#include "vkauthorizationdialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -68,7 +69,15 @@ private:
 
     QPixmap roundPhoto100(QPixmap photo);
     void hideAllTabs();
+
     void setTabs();
+    void setToken();
+    void setLastEntrance();
+    void setFetchers();
+    void setRepositories();
+    void setVersion();
+
+    bool hasToken();
 
 private:
     Ui::MainWindow *ui;
@@ -77,12 +86,14 @@ private:
     std::shared_ptr<Fetcher> mFetcher = nullptr;
     std::shared_ptr<GreetingWidget> mGreetingWidget = nullptr;
 
-    QWebView *mVkAuthorizationView = nullptr;
+    VkAuthorizationDialog *mVkAuthorizationDialog = nullptr;
 
     QWidget *mNothingHereWidget = nullptr;
     WaitingWidget *mWaitingWidget = nullptr;
     FinishedWidget *mFinishedWidget = nullptr;
     LaunchedWidget *mLaunchedWidget = nullptr;
+
+    Version mVersion;
 
     bool mEditFormShowed = false;
 };

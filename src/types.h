@@ -46,6 +46,13 @@ struct SendingResult
     QVector<Group> errorGroups;
 };
 
+struct Version
+{
+    int major = 0;
+    int minor = 1;
+    int patch = 0;
+};
+
 QDataStream &operator<<(QDataStream &, const MessagePack &);
 QDataStream &operator>>(QDataStream &, MessagePack &);
 

@@ -103,55 +103,20 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    mVkAuthorizationView = new QWebView(this);
+    mVkAuthorizationDialog = new VkAuthorizationDialog(this);
 
     mRepository = std::make_shared<Repository>();
     mFetcher = std::make_shared<Fetcher>();
 
-    if (mFetcher->tokenIsEmpty())
-    {
-        mGreetingWidget = std::make_shared<GreetingWidget>(this);
-        mGreetingWidget->resize(rect().size());
-        mGreetingWidget->show();
-        connect(mGreetingWidget.get(), &GreetingWidget::accessTokenReceived,
-                [this](QString token)
-        {
-            mGreetingWidget->close();
-            mFetcher->setAccessToken(token);
-        });
-    }
-
-    mFetcher->setRepository(mRepository);
-
-    //get last date entrance and set to the label
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-    if (settings.contains("Mainwindow/lastEntranceSecs"))
-    {
-        QDateTime lastEntrance =
-                QDateTime::fromSecsSinceEpoch(settings.value("Mainwindow/lastEntranceSecs", 0).toULongLong());
-        QLocale locale = QLocale::Russian;
-
-        qDebug() << QDateTime::currentDateTime();
-
-        QString labelText = "последний запуск ";
-
-        if (QDateTime::currentDateTime().date() != lastEntrance.date())
-            labelText += QString::number(lastEntrance.date().day()) + " "
-                    + locale.toString(lastEntrance.date(), "MMMM") + " ";
-        labelText += "в " + lastEntrance.toString("HH:mm") + " ";
-        ui->lastEntranceLabel->setText(labelText);
-    }
-
+    setToken();
     setInterfaceListWidget();
     setTabs();
     hideAllTabs();
+    setFetchers();
+    setRepositories();
+    setVersion();
+
     mNothingHereWidget->show();
-
-    mWaitingWidget->setFetcher(mFetcher);
-    mLaunchedWidget->setFetcher(mFetcher);
-    mFinishedWidget->setFetcher(mFetcher);
-
-    mWaitingWidget->setRepository(mRepository);
 
     connect(ui->interfaceListWidget, &QListWidget::itemClicked,
             this, &MainWindow::onInterfaceListWidgetItemClicked);
@@ -191,29 +156,23 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->changeAccountButton, &QPushButton::released,
             this, &MainWindow::onChangeAccountButtonReleased);
 
-    connect(mVkAuthorizationView, &QWebView::urlChanged,
-            [&](const QUrl &url)
+    connect(mVkAuthorizationDialog, &VkAuthorizationDialog::accessTokenReceived,
+            [this](QString *token)
     {
-        qDebug() << "View Url Changed" << url.url();
-        QRegExp reg("access_token=[\\d\\w]+");
-        if (reg.indexIn(url.fragment()) != -1)
-        {
-            QString exm = reg.cap(0);
-            QString token = reg.cap(0).right(reg.cap(0).count() - reg.cap(0).indexOf("=") - 1);
-            mFetcher->setAccessToken(token);
-            mVkAuthorizationView->close();
-            mFetcher->onUserDataUpdate();
-        }
+        mFetcher->setAccessToken(*token);
+        mFetcher->onUserDataUpdate();
     });
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete mVkAuthorizationView;
 
     QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
     settings.setValue("Mainwindow/lastEntranceSecs", QString::number(QDateTime::currentDateTime().toSecsSinceEpoch()));
+    settings.setValue("Mainwindow/version.major", mVersion.major);
+    settings.setValue("Mainwindow/version.minor", mVersion.minor);
+    settings.setValue("Mainwindow/version.patch", mVersion.patch);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -263,15 +222,8 @@ void MainWindow::onInterfaceListWidgetItemClicked(QListWidgetItem *item)
 
 void MainWindow::onChangeAccountButtonReleased()
 {
-    mVkAuthorizationView->load(QUrl("https://oauth.vk.com/authorize?"
-                   "client_id=7656391"
-                   "&display=page"
-                   "&redirect_uri=https://oauth.vk.com/blank.html"
-                   "&scope=wall,photos,groups,offline"
-                   "&response_type=token"
-                   "&v=5.130"));
 
-    mVkAuthorizationView->show();
+    mVkAuthorizationDialog->exec();
 }
 
 void MainWindow::setInterfaceListWidget()
@@ -431,3 +383,66 @@ void MainWindow::setTabs()
     //Здесь должен быть Settings widget
 }
 
+void MainWindow::setToken()
+{
+    if (hasToken())
+    {
+        mGreetingWidget = std::make_shared<GreetingWidget>(this);
+        mGreetingWidget->resize(rect().size());
+        mGreetingWidget->show();
+        connect(mGreetingWidget.get(), &GreetingWidget::accessTokenReceived,
+                [this](QString *token)
+        {
+            mGreetingWidget->close();
+            mFetcher->setAccessToken(*token);
+        });
+    }
+}
+
+void MainWindow::setLastEntrance()
+{
+    //get last date entrance and set to the label
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    if (settings.contains("Mainwindow/lastEntranceSecs"))
+    {
+        QDateTime lastEntrance =
+                QDateTime::fromSecsSinceEpoch(settings.value("Mainwindow/lastEntranceSecs", 0).toULongLong());
+        QLocale locale = QLocale::Russian;
+
+        qDebug() << QDateTime::currentDateTime();
+
+        QString labelText = "последний запуск ";
+
+        if (QDateTime::currentDateTime().date() != lastEntrance.date())
+            labelText += QString::number(lastEntrance.date().day()) + " "
+                    + locale.toString(lastEntrance.date(), "MMMM") + " ";
+        labelText += "в " + lastEntrance.toString("HH:mm") + " ";
+        ui->lastEntranceLabel->setText(labelText);
+    }
+}
+
+void MainWindow::setFetchers()
+{
+    mWaitingWidget->setFetcher(mFetcher);
+    mLaunchedWidget->setFetcher(mFetcher);
+    mFinishedWidget->setFetcher(mFetcher);
+}
+
+void MainWindow::setRepositories()
+{
+    mFetcher->setRepository(mRepository);
+    mWaitingWidget->setRepository(mRepository);
+}
+
+void MainWindow::setVersion()
+{
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    mVersion.major = settings.value("Mainwindow/version.major").toInt();
+    mVersion.minor = settings.value("Mainwindow/version.minor").toInt();
+    mVersion.patch = settings.value("Mainwindow/version.patch").toInt();
+}
+
+bool MainWindow::hasToken()
+{
+    return mFetcher->tokenIsEmpty();
+}

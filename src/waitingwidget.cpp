@@ -71,14 +71,14 @@ void WaitingWidget::loadLists()
 
         if (reply == QMessageBox::Yes)
         {
-            QString saveFileName = QFileDialog::getSaveFileName(0, "Сохранить", "",
+            QString saveFileName = QFileDialog::getSaveFileName(this, "Сохранить", "",
                                                         tr("VKSender Files (*.vks)"));
             if (!saveFileName.isEmpty())
                 mRepository->serialize(getAllMessagePacks(), saveFileName);
         }
     }
 
-    QString openFileName = QFileDialog::getOpenFileName(0, "Открыть", "",
+    QString openFileName = QFileDialog::getOpenFileName(this, "Открыть", "",
                                                 tr("VKSender Files (*.vks)"));
     if (!openFileName.isEmpty())
     {
@@ -91,7 +91,7 @@ void WaitingWidget::saveLists()
 {
     if (listSize())
     {
-        QString saveFileName = QFileDialog::getSaveFileName(0, "Сохранить", "",
+        QString saveFileName = QFileDialog::getSaveFileName(this, "Сохранить", "",
                                                     tr("VKSender Files (*.vks)"));
         if (!saveFileName.isEmpty())
             mRepository->serialize(getAllMessagePacks(), saveFileName);

@@ -3,6 +3,9 @@
 
 #include <QWidget>
 #include <QWebView>
+#include <QDialog>
+
+#include "vkauthorizationdialog.h"
 
 namespace Ui {
 class GreetingWidget;
@@ -12,21 +15,20 @@ class GreetingWidget : public QWidget
 {
     Q_OBJECT
 
+signals:
+    void accessTokenReceived(QString *token);
+
 public:
     explicit GreetingWidget(QWidget *parent = nullptr);
     ~GreetingWidget();
 
-signals:
-    void accessTokenReceived(QString token);
-
 private slots:
     void onLaunchButtonClicked();
-    void onViewUrlChanged(const QUrl &url);
 
 private:
     Ui::GreetingWidget *ui;
 
-    QWebView * mVkAuthorizationView;
+    VkAuthorizationDialog *mVkAuthorizationDialog;
 };
 
 #endif // GREETINGWIDGET_H

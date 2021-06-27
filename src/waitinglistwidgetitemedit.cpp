@@ -43,7 +43,7 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(QWidget *parent) :
             return;
         }
 
-        QString name = QFileDialog::getOpenFileName(0, "Открыть", "",
+        QString name = QFileDialog::getOpenFileName(this, "Открыть", "",
                                                     tr("Image Files (*.png *.jpg *.jpeg *.gif)"));
         if (mPhotoPaths.find(name) != mPhotoPaths.end())
         {

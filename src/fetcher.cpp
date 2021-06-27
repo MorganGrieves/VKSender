@@ -23,8 +23,9 @@ Fetcher::Fetcher(QObject *parent) : QObject(parent)
 {
     mNetworkManager = new QNetworkAccessManager(this);
 
-//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-//    vkApi.implicitFlowAccessToken = settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString();
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    settings.clear();
+    //vkApi.implicitFlowAccessToken = settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString();
 }
 
 Fetcher::~Fetcher()

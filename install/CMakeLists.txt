@@ -1,8 +1,0 @@
-include(CPackIFW)
-include(CPack)
-set(DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data)
-
-install(
-    TARGETS ${PROJECT_NAME}
-    DESTINATION ${RUNTIME_DESTINATION}
-)
