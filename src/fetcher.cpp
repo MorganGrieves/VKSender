@@ -23,15 +23,18 @@ Fetcher::Fetcher(QObject *parent) : QObject(parent)
 {
     mNetworkManager = new QNetworkAccessManager(this);
 
+
     QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-    settings.clear();
-    //vkApi.implicitFlowAccessToken = settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString();
+    !settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString().isEmpty() ?
+        setAccessToken(settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString())
+              : void();
+
 }
 
 Fetcher::~Fetcher()
 {
-//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-//    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
 }
 
 void Fetcher::setRepository(const std::shared_ptr<Repository> repository)
@@ -41,10 +44,10 @@ void Fetcher::setRepository(const std::shared_ptr<Repository> repository)
 
 bool Fetcher::tokenIsEmpty() const
 {
-    return (vkApi.implicitFlowAccessToken == "");
+    return (vkApi.implicitFlowAccessToken.isEmpty());
 }
 
-void Fetcher::setAccessToken(QString token)
+void Fetcher::setAccessToken(const QString &token)
 {
     vkApi.implicitFlowAccessToken = token;
     qDebug() << "Token was set";

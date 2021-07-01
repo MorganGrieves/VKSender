@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME} ${WIN} ${HEADERS} ${SOURCES} ${UI} ${RESOURCE})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
+#include_directories(${CRYPTO_INCLUDE_DIRS})
 target_link_libraries(
     ${PROJECT_NAME}
     Qt5::Network
@@ -41,16 +42,54 @@ endif()
 
 install(
     TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION ${RUNTIME_DESTINATION}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${RUNTIME_DESTINATION}/lib
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${RUNTIME_DESTINATION}/lib
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${RUNTIME_DESTINATION}
 )
 
-install(CODE
-    "execute_process(
-        COMMAND
-            ${WINDEPLOYQT_APP} ${CMAKE_INSTALL_PREFIX}/${RUNTIME_DESTINATION}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}
-    )")
+get_target_property(QMAKE_EXECUTABLE Qt5::qmake IMPORTED_LOCATION)
+exec_program(
+    ${QMAKE_EXECUTABLE} ARGS -query QT_INSTALL_PLUGINS
+    OUTPUT_VARIABLE QT_PLUGIN_PATH
+)
 
+set(dirs)
+foreach(path ${CMAKE_PREFIX_PATH})
+    if (WIN32)
+       list(APPEND dirs ${path} ${path}/bin)
+    else()
+        list(APPEND dirs ${path} ${path}/lib)
+    endif()
+endforeach()
+
+set(plugs)
+set(openssl_LIBS)
+if(WIN32)
+    foreach(plug qwindows)
+        string(TOUPPER ${plug} UPPERCASE_PLUG)
+        set(QT_${UPPERCASE_PLUG}_PLUGIN_RELEASE ${QT_PLUGIN_PATH}/platforms/${plug}.dll)
+        list(APPEND plugs ${plug})
+    endforeach()
+
+    foreach(plug qwindowsvistastyle)
+        string(TOUPPER ${plug} UPPERCASE_PLUG)
+        set(QT_${UPPERCASE_PLUG}_PLUGIN_RELEASE ${QT_PLUGIN_PATH}/styles/${plug}.dll)
+        list(APPEND plugs ${plug})
+    endforeach()
+
+    list(APPEND openssl_LIBS ${CMAKE_PREFIX_PATH}/bin/libcrypto-1_1-x64.dll)
+
+    list(APPEND openssl_LIBS ${CMAKE_PREFIX_PATH}/bin/libssl-1_1-x64.dll)
+endif()
+
+install(
+    FILES ${openssl_LIBS}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${RUNTIME_DESTINATION})
 
 install_qt4_executable(
     "${RUNTIME_DESTINATION}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}"
+    "${plugs}"
+    ""
+    "${dirs}"
+
 )

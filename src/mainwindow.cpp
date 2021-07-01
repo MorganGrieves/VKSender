@@ -115,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent)
     setFetchers();
     setRepositories();
     setVersion();
+    setLastEntrance();
 
     mNothingHereWidget->show();
 
@@ -177,7 +178,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    mGreetingWidget->resize(rect().size());
+    if (!(mGreetingWidget == nullptr))
+        mGreetingWidget->resize(rect().size());
 }
 
 void MainWindow::onProfilePictureUpdated()
@@ -222,7 +224,6 @@ void MainWindow::onInterfaceListWidgetItemClicked(QListWidgetItem *item)
 
 void MainWindow::onChangeAccountButtonReleased()
 {
-
     mVkAuthorizationDialog->exec();
 }
 
@@ -436,7 +437,7 @@ void MainWindow::setRepositories()
 
 void MainWindow::setVersion()
 {
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);\
     mVersion.major = settings.value("Mainwindow/version.major").toInt();
     mVersion.minor = settings.value("Mainwindow/version.minor").toInt();
     mVersion.patch = settings.value("Mainwindow/version.patch").toInt();

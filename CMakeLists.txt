@@ -5,9 +5,10 @@ include(CMakePrintHelpers)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(OPENSSL_USE_STATIC_LIBS TRUE)
 
-find_package(Qt5 COMPONENTS Widgets Core Gui Network NetworkAuth WebKit WebKitWidgets REQUIRED)
-find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Core Gui Network NetworkAuth WebKit WebKitWidgets REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 include(GNUInstallDirs)
 include(DeployQt4)

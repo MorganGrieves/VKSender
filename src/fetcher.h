@@ -115,7 +115,7 @@ public:
 
     void setRepository(const std::shared_ptr<Repository> repository);
     bool tokenIsEmpty() const;
-    void setAccessToken(QString token);
+    void setAccessToken(const QString &token);
     void getGroupInfoById(const QString &id);
 
     const QPixmap &getUserPhoto100() const;
