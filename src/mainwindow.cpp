@@ -145,7 +145,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mFinishedWidget, &FinishedWidget::abortionFinished,
             [this](MessagePack message)
     {
-        mWaitingWidget->addListItem(message);
+        mWaitingWidget->addListItem(&message);
+        hideAllTabs();
+        mWaitingWidget->show();
     });
 
     connect(mFetcher.get(), &Fetcher::userPhoto100Update,
@@ -318,7 +320,7 @@ void MainWindow::setTabs()
     mLaunchedWidget = new LaunchedWidget(ui->tabFrame);
     ui->tabFrame->layout()->addWidget(mLaunchedWidget);
     connect(mLaunchedWidget, &LaunchedWidget::sendingFinished,
-            [&](SendingResult result)
+            [this](SendingResult result)
     {
         hideAllTabs();
         ui->interfaceListWidget->clearSelection();
@@ -333,7 +335,7 @@ void MainWindow::setTabs()
     ui->tabFrame->layout()->addWidget(mWaitingWidget);
 
     connect(mWaitingWidget, &WaitingWidget::showWidget,
-            [&]()
+            [this]()
     {
         hideAllTabs();
         mEditFormShowed = false;
@@ -343,7 +345,7 @@ void MainWindow::setTabs()
         mWaitingWidget->show();
     });
     connect(mWaitingWidget, &WaitingWidget::launchSending,
-            [&](MessagePack message)
+            [this](MessagePack message)
     {
         hideAllTabs();
         mEditFormShowed = false;
@@ -437,7 +439,7 @@ void MainWindow::setRepositories()
 
 void MainWindow::setVersion()
 {
-    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);\
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
     mVersion.major = settings.value("Mainwindow/version.major").toInt();
     mVersion.minor = settings.value("Mainwindow/version.minor").toInt();
     mVersion.patch = settings.value("Mainwindow/version.patch").toInt();

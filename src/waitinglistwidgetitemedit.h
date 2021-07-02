@@ -35,7 +35,7 @@ public:
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     QString getPackName() const;
-    void setMessagePack(MessagePack message);
+    void setMessagePack(const MessagePack *message);
     int getCheckedGroupsNumber();
     MessagePack getMessageInfo() const;
 

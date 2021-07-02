@@ -28,7 +28,7 @@ public:
     void showItemEdit();
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
-    void setMessagePack(MessagePack message);
+    void setMessagePack(const MessagePack *message);
     MessagePack getMessagePack() const;
 
 protected:

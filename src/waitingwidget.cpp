@@ -34,11 +34,12 @@ void WaitingWidget::setRepository(const std::shared_ptr<Repository> repository)
     mRepository = repository;
 }
 
-void WaitingWidget::addListItem(MessagePack message)
+WaitingListWidgetItem * WaitingWidget::addListItem(const MessagePack *message)
 {
     WaitingListWidgetItem *item = new WaitingListWidgetItem(this);
     item->setFetcher(mFetcher);
-    item->setMessagePack(message);
+    if (!(message == nullptr))
+        item->setMessagePack(message);
     connect(item, &WaitingListWidgetItem::deleteButtonReleased,
             this, &WaitingWidget::onDeleteButtonReleased);
     connect(item, &WaitingListWidgetItem::waitingListWidgetItemReleased,
@@ -51,9 +52,10 @@ void WaitingWidget::addListItem(MessagePack message)
         emit showWidget();
     });
 
-    item->showItemEdit();
     ui->listWidget->layout()->addWidget(item);
     ui->packCounterLabel->setNum(listSize());
+
+    return item;
 }
 
 int WaitingWidget::listSize() const
@@ -113,7 +115,7 @@ QVector<MessagePack> WaitingWidget::getAllMessagePacks() const
 void WaitingWidget::setAllMessagePacks(const QVector<MessagePack> &messages)
 {
     for (const auto &message : messages)
-        addListItem(message);
+        addListItem(&message);
 }
 
 void WaitingWidget::onLoadListsButtonReleased()
@@ -140,23 +142,7 @@ void WaitingWidget::onDeleteButtonReleased()
 
 void WaitingWidget::onAddListButtonReleased()
 {
-    WaitingListWidgetItem *item = new WaitingListWidgetItem(this);
-    item->setFetcher(mFetcher);
-    connect(item, &WaitingListWidgetItem::deleteButtonReleased,
-            this, &WaitingWidget::onDeleteButtonReleased);
-    connect(item, &WaitingListWidgetItem::waitingListWidgetItemReleased,
-            this, &WaitingWidget::waitingListWidgetItemReleased);
-    connect(item, &WaitingListWidgetItem::launchSending,
-            this, &WaitingWidget::onLaunchSending);
-    connect(item, &WaitingListWidgetItem::showWaitingWidget,
-            [&]()
-    {
-        emit showWidget();
-    });
-
-    item->showItemEdit();
-    ui->listWidget->layout()->addWidget(item);
-    ui->packCounterLabel->setNum(listSize());
+    addListItem()->showItemEdit();
 }
 
 void WaitingWidget::onLaunchSending(MessagePack message)

@@ -98,17 +98,17 @@ QString WaitingListWidgetItemEdit::getPackName() const
     return ui->namePackLineEdit->text();
 }
 
-void WaitingListWidgetItemEdit::setMessagePack(MessagePack message)
+void WaitingListWidgetItemEdit::setMessagePack(const MessagePack *message)
 {
-    ui->namePackLineEdit->setText((message.title == "Нет названия") ? "" : message.title);
-    ui->messageTextEdit->setText(message.message);
+    ui->namePackLineEdit->setText((message->title == "Нет названия") ? "" : message->title);
+    ui->messageTextEdit->setText(message->message);
 
     static_cast<QStandardItemModel *>(mGroupList->model())->clear();
 
-    for (const auto &group : message.groups)
+    for (const auto &group : message->groups)
         addUserGroupListItem(group.first, group.second);
 
-    for (const auto &fileName : message.photoPaths)
+    for (const auto &fileName : message->photoPaths)
     {
         QListWidgetItem* listItem = new QListWidgetItem();
         listItem->setIcon(QPixmap(fileName));

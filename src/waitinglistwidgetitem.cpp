@@ -37,12 +37,13 @@ void WaitingListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
     mEditItem->setFetcher(fetcher);
 }
 
-void WaitingListWidgetItem::setMessagePack(MessagePack message)
+void WaitingListWidgetItem::setMessagePack(const MessagePack *message)
 {
     mEditItem->setMessagePack(message);
 
-    ui->dateLabel->setText(message.dateCreation);
-    ui->topicLabel->setText(message.title);
+    ui->dateLabel->setText(message->dateCreation);
+    ui->topicLabel->setText(message->title);
+    ui->receiverLabel->setText("Получатели: " + QString::number(mEditItem->getCheckedGroupsNumber()));
 
 }
 

@@ -32,7 +32,7 @@ public:
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     void setRepository(const std::shared_ptr<Repository> repository);
 
-    void addListItem(MessagePack message);
+    WaitingListWidgetItem *addListItem(const MessagePack *message = nullptr);
 
     int listSize() const;
 
