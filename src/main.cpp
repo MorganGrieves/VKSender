@@ -5,6 +5,8 @@
 #include <QListWidget>
 #include <QMessageLogger>
 #include <QFile>
+#include <QSharedMemory>
+#include <QSystemSemaphore>
 
 void debugMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -62,6 +64,37 @@ int main(int argc, char *argv[])
 
     {
         QApplication a(argc, argv);
+
+        QSystemSemaphore semaphore("13c3fb0c-9e8f-4c97-8632-07cede1e2054", 1);
+        semaphore.acquire();
+
+    #ifndef Q_OS_WIN32
+        QSharedMemory nix_fix_shared_memory("<e504a879-2157-4611-ad0a-ad185c526422");
+        if (nix_fix_shared_memory.attach())
+            nix_fix_shared_memory.detach();
+    #endif
+
+        QSharedMemory sharedMemory("e504a879-2157-4611-ad0a-ad185c526422");
+        bool is_running;
+        if (sharedMemory.attach())
+            is_running = true;
+        else
+        {
+            sharedMemory.create(1);
+            is_running = false;
+        }
+        semaphore.release();
+
+        if (is_running)
+        {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setText("The application is already running.\n"
+                           "Allowed to run only one instance of the application.");
+            msgBox.exec();
+            return 1;
+        }
+
         qInfo() << "============================================";
         qInfo() << "Application started";
         MainWindow w;

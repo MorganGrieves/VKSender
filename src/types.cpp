@@ -13,6 +13,9 @@ QDataStream &operator<<(QDataStream &out, const MessagePack &message)
         out << message.message;
         out << message.photoPaths;
         out << message.dateCreation;
+        out << message.audioPaths;
+        out << message.videoPaths;
+        out << message.docPaths;
     }
 
     return out;
@@ -29,6 +32,9 @@ QDataStream &operator>>(QDataStream &in, MessagePack &message)
         in >> message.message;
         in >> message.photoPaths;
         in >> message.dateCreation;
+        in >> message.audioPaths;
+        in >> message.videoPaths;
+        in >> message.docPaths;
     }
 
     return in;
