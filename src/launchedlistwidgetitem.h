@@ -24,6 +24,9 @@ public:
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
     void setMessagePackAndLaunch(const MessagePack &message);
 
+private slots:
+    void onAttachmentUpdated(QUuid id);
+
 private:
     Ui::LaunchedListWidgetItem *ui;
 

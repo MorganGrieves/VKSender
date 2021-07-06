@@ -34,9 +34,9 @@ background-color: white;
       </sizepolicy>
      </property>
      <property name="styleSheet">
-      <string notr="true">border-bottom: 1px solid #E2E4E5;
+      <string notr="true">
 background-color: white;
-</string>
+border-bottom: 0px;</string>
      </property>
      <property name="text">
       <string/>
@@ -52,7 +52,7 @@ background-color: white;
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">border-bottom: 0px;</string>
+      <string notr="true"/>
      </property>
      <property name="text">
       <string>Название группы</string>

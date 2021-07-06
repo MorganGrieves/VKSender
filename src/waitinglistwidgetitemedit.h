@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QFileDialog>
+#include <QFileInfo>
 
 #include "types.h"
 #include "grouplistview.h"
@@ -44,7 +45,10 @@ private slots:
     void onSaveButtonReleased();
     void onCancelButtonReleased();
     void onUserGroupsUpdate();
-    void onPhotosListViewDoubleClicked(const QModelIndex &index);
+    void onPhotoListWidgetDoubleClicked(const QModelIndex &index);
+    void onVideoListWidgetDoubleClicked(const QModelIndex &index);
+    void onAudioListWidgetDoubleClicked(const QModelIndex &index);
+    void onDocListWidgetDoubleClicked(const QModelIndex &index);
     void onDeleteSelectedButtonReleased();
     void onAddGroupButtonReleased();
     void onBackButtonReleased();
@@ -54,8 +58,21 @@ private:
     void addUserGroupListItem(const Group &group, Qt::CheckState state = Qt::Unchecked);
     QPixmap roundPhoto35(QPixmap photo) const;
     void setUserGroups(const QVector<Group> &groups);
+
     void createGroupListView();
+
     QString filterGroupLineEdit(const QString &text);
+
+    int countAllAttachments() const;
+    bool canAddAttachment() const;
+
+    bool photoIncludes(const QString &fileName);
+    bool audioIncludes(const QString &fileName);
+    bool videoIncludes(const QString &fileName);
+    bool docIncluded(const QString &fileName);
+
+    bool acceptDocFile(const QString &fileName) const;
+    bool isAttchmentsEmpty() const;
 
 private:
     Ui::WaitingListWidgetItemEdit *ui;    
@@ -65,11 +82,12 @@ private:
 
     QAction *mPhotoAction = nullptr;
     QAction *mVideoAction = nullptr;
-    QAction *mFileAction = nullptr;
+    QAction *mDocAction = nullptr;
+    QAction *mAudioAction = nullptr;
 
     bool mSaveFlag = false;
 
-    std::map<Path, QListWidgetItem *> mPhotoPaths;
+    const Qt::ItemDataRole mPathRole = Qt::UserRole;
 };
 
 #endif // WAITINGLISTWIDGETITEMEDIT_H

@@ -24,6 +24,7 @@ struct Group
     QPixmap photo50;
     bool canPost = false;
     int version = 1;
+    QString type = "";
 };
 
 struct MessagePack
@@ -35,7 +36,8 @@ struct MessagePack
     QVector<QPair<Group, Qt::CheckState>> groups;
     QVector<Path> photoPaths;
     QVector<Path> videoPaths;
-    QVector<Path> filePaths;
+    QVector<Path> docPaths;
+    QVector<Path> audioPaths;
     int version = 1;
 };
 

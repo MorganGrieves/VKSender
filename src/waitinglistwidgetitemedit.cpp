@@ -15,7 +15,8 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(QWidget *parent) :
     paperClipButtonMenu->setCursor(Qt::PointingHandCursor);
     mPhotoAction = paperClipButtonMenu->addAction(QIcon(":/style/image/camera.png"), "Фотография");
     mVideoAction = paperClipButtonMenu->addAction(QIcon(":/style/image/play-button.png"), "Видеозапись");
-    mFileAction = paperClipButtonMenu->addAction(QIcon(":/style/image/file.png"), "Документ");
+    mDocAction = paperClipButtonMenu->addAction(QIcon(":/style/image/file.png"), "Документ");
+    mAudioAction = paperClipButtonMenu->addAction(QIcon(":/style/image/music.png"), "Аудио");
 
     ui->paperClipButton->setMenu(paperClipButtonMenu);
 
@@ -25,38 +26,166 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(QWidget *parent) :
             this, &WaitingListWidgetItemEdit::onCancelButtonReleased);
     connect(ui->deleteSelectedButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onDeleteSelectedButtonReleased);
-    connect(ui->photoListWidget, &QListView::doubleClicked,
-            this, &WaitingListWidgetItemEdit::onPhotosListViewDoubleClicked);
     connect(ui->addGroupButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onAddGroupButtonReleased);
     connect(ui->backButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onBackButtonReleased);
     connect(ui->launchButton, &QPushButton::released,
             this, &WaitingListWidgetItemEdit::onLaunchButtonReleased);
+    connect(ui->photoListWidget, &QListView::doubleClicked,
+            this, &WaitingListWidgetItemEdit::onPhotoListWidgetDoubleClicked);
+    connect(ui->videoListWidget, &QListView::doubleClicked,
+            this, &WaitingListWidgetItemEdit::onVideoListWidgetDoubleClicked);
+    connect(ui->audioListWidget, &QListView::doubleClicked,
+            this, &WaitingListWidgetItemEdit::onAudioListWidgetDoubleClicked);
+    connect(ui->docListWidget, &QListView::doubleClicked,
+            this, &WaitingListWidgetItemEdit::onDocListWidgetDoubleClicked);
 
     connect(mPhotoAction, &QAction::triggered,
             [this](bool)
     {
-        if (ui->photoListWidget->count() >= 6)
+        if (!canAddAttachment())
         {
-            QMessageBox::warning(this, tr("VK Sender"), tr("Загрузить можно только 6 изображений"));
+            QMessageBox::warning(this, tr("VK Sender"), tr("Загрузить можно только 10 приложений!"));
             return;
         }
 
-        QString name = QFileDialog::getOpenFileName(this, "Открыть", "",
+        QString fileName = QFileDialog::getOpenFileName(this, "Открыть", "",
                                                     tr("Image Files (*.png *.jpg *.jpeg *.gif)"));
-        if (mPhotoPaths.find(name) != mPhotoPaths.end())
+        if (fileName.isEmpty()) return;
+
+        if (QFileInfo(fileName).size() > 209715200)
         {
-            QMessageBox::warning(this, tr("VK Sender"), tr("Данное изображение уже есть в списке"));
+            QMessageBox::warning(this, tr("VK Sender"), tr("Файл не должен превышать 200 МБ!"));
+            return;
+        }
+
+        if (photoIncludes(fileName))
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Данное изображение уже есть в списке!"));
             return;
         }
 
         QListWidgetItem* listItem = new QListWidgetItem();
-        listItem->setIcon(QPixmap(name));
+        listItem->setIcon(QPixmap(fileName));
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
         ui->photoListWidget->addItem(listItem);
-        mPhotoPaths[name] = listItem;
+
         mSaveFlag = true;
     });
+
+    connect(mAudioAction, &QAction::triggered,
+            [this](bool)
+    {
+        if (!canAddAttachment())
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Загрузить можно только 10 приложений!"));
+            return;
+        }
+
+        QString fileName = QFileDialog::getOpenFileName(this, "Открыть", "",
+                                                    tr("Music Files (*.mp3)"));
+        if (fileName.isEmpty()) return;
+
+        if (QFileInfo(fileName).size() > 209715200)
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Файл не должен превышать 200 МБ!"));
+            return;
+        }
+
+        if (audioIncludes(fileName))
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Данное аудио уже есть в списке"));
+            return;
+        }
+
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(":/style/image/doc_icons.png").copy(0, 90, 30, 30));
+        listItem->setText(QFileInfo(fileName).fileName());
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
+        ui->audioListWidget->addItem(listItem);
+
+        mSaveFlag = true;
+    });
+
+    connect(mVideoAction, &QAction::triggered,
+            [this](bool)
+    {
+        if (!canAddAttachment())
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Загрузить можно только 10 приложений!"));
+            return;
+        }
+
+        QString fileName = QFileDialog::getOpenFileName(this, "Открыть", "",
+                                                    tr("Video Files (*.avi *.mp4 *.3gp *.mpeg *.mov *.flv *.wmv)"));
+        if (fileName.isEmpty()) return;
+
+        if (QFileInfo(fileName).size() > 209715200)
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Файл не должен превышать 200 МБ!"));
+            return;
+        }
+
+        if (videoIncludes(fileName))
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Данное видео уже есть в списке"));
+            return;
+        }
+
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(":/style/image/doc_icons.png").copy(0, 120, 30, 30));
+        listItem->setText(QFileInfo(fileName).fileName());
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
+        ui->videoListWidget->addItem(listItem);
+
+        mSaveFlag = true;
+    });
+
+    connect(mDocAction, &QAction::triggered,
+            [this](bool)
+    {
+        if (!canAddAttachment())
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Загрузить можно только 10 приложений!"));
+            return;
+        }
+
+        QString fileName = QFileDialog::getOpenFileName(this, "Открыть", "",
+                                                    tr("All files (*)"));
+        if (fileName.isEmpty()) return;
+
+        if (QFileInfo(fileName).size() > 209715200)
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Файл не должен превышать 200 МБ!"));
+            return;
+        }
+
+        if (videoIncludes(fileName))
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Данный файл уже есть в списке"));
+            return;
+        }
+
+        if (!acceptDocFile(fileName))
+        {
+            QMessageBox::warning(this, tr("VK Sender"), tr("Допустимы любые форматы за исключением mp3 и исполняемых файлов"));
+            return;
+        }
+
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(":/style/image/doc_icons.png").copy(0, 0, 30, 30));
+        listItem->setText(QFileInfo(fileName).fileName());
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
+        ui->docListWidget->addItem(listItem);
+
+        mSaveFlag = true;
+    });
+
 }
 
 WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(const WaitingListWidgetItemEdit &item) :
@@ -68,12 +197,17 @@ WaitingListWidgetItemEdit::WaitingListWidgetItemEdit(const WaitingListWidgetItem
 
     mFetcher = item.mFetcher;
 
-    for (const auto & photoPath : item.mPhotoPaths)
-    {
-        QListWidgetItem * clone = photoPath.second->clone();
-        mPhotoPaths[photoPath.first] = clone;
-        ui->photoListWidget->addItem(clone);
-    }
+    for (int i = 0; i < item.ui->photoListWidget->count(); ++i)
+        ui->photoListWidget->addItem(item.ui->photoListWidget->item(i)->clone());
+
+    for (int i = 0; i < item.ui->videoListWidget->count(); ++i)
+        ui->videoListWidget->addItem(item.ui->videoListWidget->item(i)->clone());
+
+    for (int i = 0; i < item.ui->audioListWidget->count(); ++i)
+        ui->audioListWidget->addItem(item.ui->audioListWidget->item(i)->clone());
+
+    for (int i = 0; i < item.ui->docListWidget->count(); ++i)
+        ui->docListWidget->addItem(item.ui->docListWidget->item(i)->clone());
 
     ui->messageTextEdit->setMarkdown(item.ui->messageTextEdit->toMarkdown());
     ui->namePackLineEdit->setText(item.ui->namePackLineEdit->text());
@@ -89,6 +223,7 @@ void WaitingListWidgetItemEdit::setFetcher(const std::shared_ptr<Fetcher> fetche
     mFetcher = fetcher;
     connect(mFetcher.get(), &Fetcher::userGroupsUpdate,
             this, &WaitingListWidgetItemEdit::onUserGroupsUpdate);
+
     for (const auto &group : fetcher->getUserGroups())
         addUserGroupListItem(group);
 }
@@ -112,8 +247,39 @@ void WaitingListWidgetItemEdit::setMessagePack(const MessagePack *message)
     {
         QListWidgetItem* listItem = new QListWidgetItem();
         listItem->setIcon(QPixmap(fileName));
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
         ui->photoListWidget->addItem(listItem);
-        mPhotoPaths[fileName] = listItem;
+    }
+
+    for (const auto &fileName : message->videoPaths)
+    {
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(":/style/image/doc_icons.png").copy(0, 120, 30, 30));
+        listItem->setText(QFileInfo(fileName).fileName());
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
+        ui->videoListWidget->addItem(listItem);
+    }
+
+    for (const auto &fileName : message->audioPaths)
+    {
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(":/style/image/doc_icons.png").copy(0, 90, 30, 30));
+        listItem->setText(QFileInfo(fileName).fileName());
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
+        ui->audioListWidget->addItem(listItem);
+    }
+
+    for (const auto &fileName : message->docPaths)
+    {
+        QListWidgetItem* listItem = new QListWidgetItem();
+        listItem->setIcon(QPixmap(":/style/image/doc_icons.png").copy(0, 0, 30, 30));
+        listItem->setText(QFileInfo(fileName).fileName());
+        listItem->setToolTip(QFileInfo(fileName).fileName());
+        listItem->setData(mPathRole, fileName);
+        ui->docListWidget->addItem(listItem);
     }
 }
 
@@ -144,6 +310,8 @@ MessagePack WaitingListWidgetItemEdit::getMessageInfo() const
             group.photo50Link = itemModel->item(i)->data(GroupListDelegate::GROUP_PHOTO50LINK).toString();
             group.photo50 = itemModel->item(i)->data(GroupListDelegate::GROUP_ICON).value<QPixmap>();
             group.canPost = itemModel->item(i)->data(GroupListDelegate::GROUP_CANPOST).toBool();
+            group.type = itemModel->item(i)->data(GroupListDelegate::GROUP_CANPOST).toBool();
+            group.type = itemModel->item(i)->data(GroupListDelegate::GROUP_TYPE).toString();
 
             result.groups.push_back(QPair<Group, Qt::CheckState>(group,
                                                                  itemModel->item(i)->checkState()));
@@ -153,9 +321,17 @@ MessagePack WaitingListWidgetItemEdit::getMessageInfo() const
     result.title = ui->namePackLineEdit->text().isEmpty() ? "Нет названия"
                                                           : ui->namePackLineEdit->text();
 
+    for (int i = 0; i < ui->photoListWidget->count(); ++i)
+        result.photoPaths.push_back(ui->photoListWidget->item(i)->data(mPathRole).toString());
 
-    for (const auto &[Path, _] : mPhotoPaths)
-        result.photoPaths.push_back(Path);
+    for (int i = 0; i < ui->videoListWidget->count(); ++i)
+        result.videoPaths.push_back(ui->videoListWidget->item(i)->data(mPathRole).toString());
+
+    for (int i = 0; i < ui->audioListWidget->count(); ++i)
+        result.audioPaths.push_back(ui->audioListWidget->item(i)->data(mPathRole).toString());
+
+    for (int i = 0; i < ui->docListWidget->count(); ++i)
+        result.docPaths.push_back(ui->docListWidget->item(i)->data(mPathRole).toString());
 
     return result;
 }
@@ -190,39 +366,63 @@ void WaitingListWidgetItemEdit::onUserGroupsUpdate()
         addUserGroupListItem(group);
 }
 
-void WaitingListWidgetItemEdit::onPhotosListViewDoubleClicked(const QModelIndex &index)
+void WaitingListWidgetItemEdit::onPhotoListWidgetDoubleClicked(const QModelIndex &index)
 {
     if (!index.isValid())
         return;
 
-    if (QListWidget *photosListWidget = dynamic_cast <QListWidget *>(sender()))
-        if (QListWidgetItem *photoItem = photosListWidget->takeItem(index.row()))
-            for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); )
-            {
-                if (it->second == photoItem)
-                {
-                    delete photoItem;
-                    it = mPhotoPaths.erase(it);
-                }
-                else
-                    ++it;
-            }
+    if (QListWidget *photoListWidget = dynamic_cast <QListWidget *>(sender()))
+        if (QListWidgetItem *photoItem = photoListWidget->takeItem(index.row()))
+            delete photoItem;
+}
+
+void WaitingListWidgetItemEdit::onVideoListWidgetDoubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid())
+        return;
+
+    if (QListWidget *videoListWidget = dynamic_cast <QListWidget *>(sender()))
+        if (QListWidgetItem *videoItem = videoListWidget->takeItem(index.row()))
+            delete videoItem;
+}
+
+void WaitingListWidgetItemEdit::onAudioListWidgetDoubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid())
+        return;
+
+    if (QListWidget *audioListWidget = dynamic_cast <QListWidget *>(sender()))
+        if (QListWidgetItem *audioItem = audioListWidget->takeItem(index.row()))
+            delete audioItem;
+}
+
+void WaitingListWidgetItemEdit::onDocListWidgetDoubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid())
+        return;
+
+    if (QListWidget *docListWidget = dynamic_cast <QListWidget *>(sender()))
+        if (QListWidgetItem *docItem = docListWidget->takeItem(index.row()))
+            delete docItem;
 }
 
 void WaitingListWidgetItemEdit::onDeleteSelectedButtonReleased()
 {
     QList<QListWidgetItem *> selectedItems = ui->photoListWidget->selectedItems();
     for (QListWidgetItem *item : selectedItems)
-        for (auto it = mPhotoPaths.begin(); it != mPhotoPaths.end(); )
-        {
-            if (it->second == item)
-            {
-                delete item;
-                it = mPhotoPaths.erase(it);
-            }
-            else
-                ++it;
-        }
+        delete item;
+
+    selectedItems = ui->videoListWidget->selectedItems();
+    for (QListWidgetItem *item : selectedItems)
+        delete item;
+
+    selectedItems = ui->audioListWidget->selectedItems();
+    for (QListWidgetItem *item : selectedItems)
+        delete item;
+
+    selectedItems = ui->docListWidget->selectedItems();
+    for (QListWidgetItem *item : selectedItems)
+        delete item;
 }
 
 void WaitingListWidgetItemEdit::onAddGroupButtonReleased()
@@ -271,22 +471,38 @@ void WaitingListWidgetItemEdit::onBackButtonReleased()
 
 void WaitingListWidgetItemEdit::onLaunchButtonReleased()
 {
-    if (ui->messageTextEdit->toPlainText().isEmpty() && mPhotoPaths.empty())
+    if (ui->messageTextEdit->toPlainText().isEmpty() && isAttchmentsEmpty())
     {
-        QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте изображения."));
+        QMessageBox::warning(this, tr("VK Sender"), tr("Напишите сообщение или добавьте приложение."));
         return;
     }
     bool checked = false;
+    bool pageInclued = false;
     if (QStandardItemModel *itemModel = static_cast<QStandardItemModel *>(mGroupList->model()))
     {
         for(int i = 0; i < itemModel->rowCount(); ++i)
+        {
             if (itemModel->item(i)->data(Qt::CheckStateRole) == Qt::Checked)
                 checked = true;
+            if (itemModel->item(i)->data(GroupListDelegate::GROUP_TYPE) == "page")
+                pageInclued = true;
+        }
 
         if (!checked)
         {
             QMessageBox::warning(this, tr("VK Sender"), tr("Не выбрана ни одна группа для рассылки"));
             return;
+        }
+
+        if (pageInclued)
+        {
+            QMessageBox::StandardButton userAction =
+                    QMessageBox::question(this, "VKSender", "В списке выбраны сообщества, которые не поддерживают загрузку документов. Продолжить?",
+                                          QMessageBox::Yes|QMessageBox::No);
+            if (userAction == QMessageBox::No)
+                return;
+            if (userAction == QMessageBox::Cancel)
+                return;
         }
     }
 
@@ -307,6 +523,7 @@ void WaitingListWidgetItemEdit::addUserGroupListItem(const Group &group, Qt::Che
     item->setData(group.vkid, GroupListDelegate::GROUP_ID);
     item->setData(group.canPost, GroupListDelegate::GROUP_CANPOST);
     item->setData(group.photo50Link, GroupListDelegate::GROUP_PHOTO50LINK);
+    item->setData(group.type, GroupListDelegate::GROUP_TYPE);
     item->setCheckState(state);
 
     item->setSizeHint(QSize(0, 60));
@@ -337,7 +554,7 @@ QPixmap WaitingListWidgetItemEdit::roundPhoto35(QPixmap photo) const
 void WaitingListWidgetItemEdit::createGroupListView()
 {
     mGroupList = new GroupListView(this);
-    ui->selectedGroupsWidget->layout()->addWidget(mGroupList);
+    ui->groupListView->layout()->addWidget(mGroupList);
 }
 
 QString WaitingListWidgetItemEdit::filterGroupLineEdit(const QString &text)
@@ -351,6 +568,80 @@ QString WaitingListWidgetItemEdit::filterGroupLineEdit(const QString &text)
     }
 
     return text;
+}
+
+int WaitingListWidgetItemEdit::countAllAttachments() const
+{
+    return ui->photoListWidget->count() +
+            ui->videoListWidget->count() +
+            ui->audioListWidget->count() +
+            ui->docListWidget->count();
+}
+
+bool WaitingListWidgetItemEdit::canAddAttachment() const
+{
+    if (countAllAttachments() > 10)
+        return false;
+
+    return true;
+}
+
+bool WaitingListWidgetItemEdit::photoIncludes(const QString &fileName)
+{
+    for (int i = 0; i < ui->photoListWidget->count(); ++i)
+    {
+        if (ui->photoListWidget->item(i)->data(mPathRole).toString() == fileName)
+            return true;
+    }
+
+    return false;
+}
+
+bool WaitingListWidgetItemEdit::audioIncludes(const QString &fileName)
+{
+    for (int i = 0; i < ui->audioListWidget->count(); ++i)
+        if (ui->audioListWidget->item(i)->data(mPathRole).toString() == fileName)
+            return true;
+
+    return false;
+}
+
+bool WaitingListWidgetItemEdit::videoIncludes(const QString &fileName)
+{
+    for (int i = 0; i < ui->videoListWidget->count(); ++i)
+        if (ui->videoListWidget->item(i)->data(mPathRole).toString() == fileName)
+            return true;
+
+    return false;
+}
+
+bool WaitingListWidgetItemEdit::docIncluded(const QString &fileName)
+{
+    for (int i = 0; i < ui->docListWidget->count(); ++i)
+        if (ui->docListWidget->item(i)->data(mPathRole).toString() == fileName)
+            return true;
+
+    return false;
+}
+
+bool WaitingListWidgetItemEdit::acceptDocFile(const QString &fileName) const
+{
+    QFileInfo docFileInfo(fileName);
+    if (docFileInfo.suffix() == "exe" || docFileInfo.suffix() == "mp3")
+        return false;
+
+    return true;
+}
+
+bool WaitingListWidgetItemEdit::isAttchmentsEmpty() const
+{
+    if (ui->photoListWidget->count() ||
+            ui->docListWidget->count() ||
+            ui->audioListWidget->count() ||
+            ui->videoListWidget->count())
+        return false;
+
+    return true;
 }
 
 WaitingListWidgetItemEdit::~WaitingListWidgetItemEdit()

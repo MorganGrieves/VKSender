@@ -27,7 +27,7 @@ void VkAuthorizationDialog::showEvent(QShowEvent *event)
                    "client_id=7656391"
                    "&display=page"
                    "&redirect_uri=https://oauth.vk.com/blank.html"
-                   "&scope=wall,photos,groups,offline"
+                   "&scope=wall,photos,groups,video,audio,docs,offline"
                    "&response_type=token"
                    "&v=5.130"));
 

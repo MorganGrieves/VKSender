@@ -28,7 +28,8 @@ struct Request
         QString groupId = "";
         QString attachments = "";
     };
-    struct Photos
+
+    struct Photo
     {
         struct getWallUploadServer
         {
@@ -47,6 +48,47 @@ struct Request
 
         getWallUploadServer getWallUploadServer;
         saveWallPhoto saveWallPhoto;
+    };
+
+    struct Audio
+    {
+        struct getUploadServer
+        {
+            QString method = "audio.getUploadServer";
+        };
+        struct save
+        {
+            QString method = "audio.save";
+        };
+        save save;
+        getUploadServer getUploadServer;
+
+    };
+
+    struct Video
+    {
+        struct save
+        {
+            QString method = "video.save";
+        };
+        save save;
+    };
+
+    struct Doc
+    {
+        struct getWallUploadServer
+        {
+            QString method = "docs.getWallUploadServer";
+            QString groupId = "";
+        };
+
+        struct save
+        {
+            QString method = "docs.save";
+        };
+
+        getWallUploadServer getWallUploadServer;
+        save save;
     };
 
     struct UsersGet
@@ -75,7 +117,10 @@ struct Request
 
     GroupById groupById;
     WallPost wallPost;
-    Photos photos;
+    Photo photos;
+    Audio audios;
+    Video videos;
+    Doc docs;
     WallDelete wallDelete;
     UsersGet usersGet;
     GroupsGet groupsGet;
@@ -101,6 +146,9 @@ class Fetcher : public QObject
 signals:
     void updatedGroupData(QVector<Group> groups);
     void updatedPhoto(QUuid id);
+    void updatedAudio(QUuid id);
+    void updatedVideo(QUuid id);
+    void updatedDoc(QUuid id);
     void sentMessage(QUuid id, Group group, PostNumber number);
     void deletedPost(QString postId, QString ownerId);
     void userPhoto100Update();
@@ -141,7 +189,13 @@ private:
 
     void downloadUserInfo();
     void downloadUserGroups();
-    QPixmap *uploadPhoto(const QUrl &url) const;
+    QPixmap *downloadPhoto(const QUrl &url) const;
+
+    void uploadMessageToGroup(const QUuid &id, const Group &group, const QString &message, const QString &attachments);
+    QString uploadPhotosToGroup(const Group &group, const QVector<Path> &photoPath, QUuid id = 0);
+    QString uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id = 0);
+    QString uploadDocsToGroup(const Group &group, const QVector<Path> &docsPaths, QUuid id = 0);
+    QString uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id = 0);
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";

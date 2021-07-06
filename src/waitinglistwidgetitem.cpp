@@ -87,7 +87,7 @@ void WaitingListWidgetItem::onLaunchButtonReleased()
 {
     if (WaitingListWidgetItemEdit *itemEdit
             = qobject_cast<WaitingListWidgetItemEdit *>(sender()))
-        emit launchSending(itemEdit->getMessageInfo());
+        emit launchSending(getMessagePack());
 }
 
 void WaitingListWidgetItem::onBackButtonReleased()

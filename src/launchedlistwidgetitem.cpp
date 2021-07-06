@@ -19,15 +19,14 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
 {
     mMessage = message;
 
-
     connect(mFetcher.get(), &Fetcher::updatedPhoto,
-            [this](QUuid id)
-    {
-        if (id == mMessage.id)
-        {
-            ui->progressBar->setValue(ui->progressBar->value() + 1);
-        }
-    });
+            this, &LaunchedListWidgetItem::onAttachmentUpdated);
+    connect(mFetcher.get(), &Fetcher::updatedVideo,
+            this, &LaunchedListWidgetItem::onAttachmentUpdated);
+    connect(mFetcher.get(), &Fetcher::updatedAudio,
+            this, &LaunchedListWidgetItem::onAttachmentUpdated);
+    connect(mFetcher.get(), &Fetcher::updatedDoc,
+            this, &LaunchedListWidgetItem::onAttachmentUpdated);
 
     connect(mFetcher.get(), &Fetcher::sentMessage,
             [this](QUuid id, Group group, PostNumber number)
@@ -56,32 +55,37 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
         }
     });
 
-    std::function checkedGroups
-    {
+    auto checkedGroups =
         [&]() -> size_t
         {
             size_t checkedGroups = 0;
             for (const auto &[group, checkState] : message.groups)
-            {
                 if (checkState == Qt::Checked)
                     checkedGroups++;
-            }
             return checkedGroups;
-        }
-     };
+        };
 
     for (const auto &[group, checkState] : message.groups)
-    {
         if (checkState == Qt::Checked)
             mResult.errorGroups.push_back(group);
-    }
 
-    mOperationsAmount = message.photoPaths.size() ? message.photoPaths.size() * checkedGroups() : checkedGroups();
+
+    mOperationsAmount = message.photoPaths.size() * checkedGroups()
+                 + message.videoPaths.size()
+                 + message.audioPaths.size()
+                 + message.docPaths.size() * checkedGroups()
+                 + checkedGroups();
     ui->progressBar->setValue(0);
     ui->progressBar->setMaximum(mOperationsAmount);
     ui->topicLabel->setText(message.title);
     mResult.message = message;
     mFetcher->sendMessage(mMessage);
+}
+
+void LaunchedListWidgetItem::onAttachmentUpdated(QUuid id)
+{
+    if (id == mMessage.id)
+        ui->progressBar->setValue(ui->progressBar->value() + 1);
 }
 
 LaunchedListWidgetItem::~LaunchedListWidgetItem()

@@ -21,7 +21,8 @@ public:
         GROUP_ID,
         GROUP_CANPOST,
         GROUP_PHOTO50LINK,
-        GROUP_PHOTO50
+        GROUP_PHOTO50,
+        GROUP_TYPE
     };
     explicit GroupListDelegate(QObject *parent = nullptr);
 

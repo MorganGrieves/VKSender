@@ -44,6 +44,7 @@ QDataStream &operator<<(QDataStream &out, const Group &group)
         out << group.photo50;
         out << group.screenName;
         out << group.photo50Link;
+        out << group.type;
     }
     return out;
 }
@@ -58,6 +59,7 @@ QDataStream &operator>>(QDataStream &in, Group &group)
         in >> group.photo50;
         in >> group.screenName;
         in >> group.photo50Link;
+        in >> group.type;
     }
     return in;
 }
