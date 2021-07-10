@@ -326,13 +326,19 @@ void MainWindow::setTabs()
     connect(mLaunchedWidget, &LaunchedWidget::sendingFinished,
             [this](SendingResult result)
     {
-        hideAllTabs();
-        ui->interfaceListWidget->clearSelection();
-        ui->interfaceListWidget->selectionModel()->select(
-                    ui->interfaceListWidget->model()->index(1, 0),
-                    QItemSelectionModel::Clear | QItemSelectionModel::Select);
-        mFinishedWidget->addFinishedItem(result);
-        mFinishedWidget->show();
+        if (!mEditFormShowed)
+        {
+            hideAllTabs();
+            ui->interfaceListWidget->clearSelection();
+            ui->interfaceListWidget->selectionModel()->select(
+                        ui->interfaceListWidget->model()->index(1, 0),
+                        QItemSelectionModel::Clear | QItemSelectionModel::Select);
+            mFinishedWidget->addFinishedItem(result);
+            mFinishedWidget->show();
+        }
+        else
+            mFinishedWidget->addFinishedItem(result);
+
     });
 
     mWaitingWidget = new WaitingWidget(ui->tabFrame);
