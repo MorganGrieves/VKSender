@@ -142,13 +142,6 @@ MainWindow::MainWindow(QWidget *parent)
             ui->tabFrame->layout()->itemAt(index)->widget()->show();
         ui->interfaceListWidget->clearSelection();
     });
-    connect(mFinishedWidget, &FinishedWidget::abortionFinished,
-            [this](MessagePack message)
-    {
-        mWaitingWidget->addListItem(&message);
-        hideAllTabs();
-        mWaitingWidget->show();
-    });
 
     connect(mFetcher.get(), &Fetcher::userPhoto100Update,
             this, &MainWindow::onProfilePictureUpdated);
@@ -315,6 +308,17 @@ void MainWindow::setTabs()
                     QItemSelectionModel::Clear | QItemSelectionModel::Select);
 
         mFinishedWidget->show();
+    });
+    connect(mFinishedWidget, &FinishedWidget::abortionFinished,
+            [this](MessagePack message)
+    {
+        mWaitingWidget->addListItem(&message);
+        hideAllTabs();
+        ui->interfaceListWidget->selectionModel()->select(
+                    ui->interfaceListWidget->model()->index(0, 0),
+                    QItemSelectionModel::Clear | QItemSelectionModel::Select);
+
+        mWaitingWidget->show();
     });
 
     mLaunchedWidget = new LaunchedWidget(ui->tabFrame);

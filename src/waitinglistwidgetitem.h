@@ -48,6 +48,8 @@ private:
     WaitingListWidgetItemEdit *mTmpEditItem = nullptr;
 
     std::shared_ptr<Fetcher> mFetcher = nullptr;
+
+    QUuid mId;
 };
 
 #endif // WAITINGLISTWIDGETITEM_H

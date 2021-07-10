@@ -9,7 +9,10 @@ WaitingListWidgetItem::WaitingListWidgetItem(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    mId = QUuid::createUuid();
+
     mEditItem = new WaitingListWidgetItemEdit();
+    mEditItem->setId(mId);
 
     ui->dateLabel->setText(QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm"));
 
@@ -20,6 +23,7 @@ WaitingListWidgetItem::WaitingListWidgetItem(QWidget *parent) :
 void WaitingListWidgetItem::showItemEdit()
 {
     mTmpEditItem = new WaitingListWidgetItemEdit(*mEditItem);
+    mTmpEditItem->setId(mId);
     connect(mTmpEditItem, &WaitingListWidgetItemEdit::saveButtonReleased,
             this, &WaitingListWidgetItem::onSaveButtonReleased);
     connect(mTmpEditItem, &WaitingListWidgetItemEdit::cancelButtonReleased,
@@ -43,7 +47,6 @@ void WaitingListWidgetItem::setMessagePack(const MessagePack *message)
 
     ui->dateLabel->setText(message->dateCreation);
     ui->topicLabel->setText(message->title);
-    ui->receiverLabel->setText("Получатели: " + QString::number(mEditItem->getCheckedGroupsNumber()));
 
 }
 
@@ -74,7 +77,6 @@ void WaitingListWidgetItem::onSaveButtonReleased()
         ui->topicLabel->setText(mEditItem->getPackName());
     else
         ui->topicLabel->setText("Нет названия");
-    ui->receiverLabel->setText("Получатели: " + QString::number(mEditItem->getCheckedGroupsNumber()));
 }
 
 void WaitingListWidgetItem::onCancelButtonReleased()
@@ -92,8 +94,6 @@ void WaitingListWidgetItem::onLaunchButtonReleased()
 
 void WaitingListWidgetItem::onBackButtonReleased()
 {
-    ui->receiverLabel->setText("Получатели: " + QString::number(mEditItem->getCheckedGroupsNumber()));
-
     emit showWaitingWidget();
 }
 

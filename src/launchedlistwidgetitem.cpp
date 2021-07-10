@@ -13,11 +13,7 @@ LaunchedListWidgetItem::LaunchedListWidgetItem(QWidget *parent) :
 void LaunchedListWidgetItem::setFetcher(const std::shared_ptr<Fetcher> fetcher)
 {
     mFetcher = fetcher;
-}
 
-void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
-{
-    mMessage = message;
 
     connect(mFetcher.get(), &Fetcher::updatedPhoto,
             this, &LaunchedListWidgetItem::onAttachmentUpdated);
@@ -54,6 +50,11 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
             emit sendingFinished(mResult);
         }
     });
+}
+
+void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
+{
+    mMessage = message;
 
     auto checkedGroups =
         [&]() -> size_t
@@ -68,7 +69,6 @@ void LaunchedListWidgetItem::setMessagePackAndLaunch(const MessagePack &message)
     for (const auto &[group, checkState] : message.groups)
         if (checkState == Qt::Checked)
             mResult.errorGroups.push_back(group);
-
 
     mOperationsAmount = message.photoPaths.size() * checkedGroups()
                  + message.videoPaths.size()

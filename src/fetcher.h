@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QPixmap>
 #include <QJsonParseError>
+#include <QImageWriter>
 
 #include "types.h"
 #include "repository.h"
@@ -144,17 +145,16 @@ class Fetcher : public QObject
     Q_OBJECT
 
 signals:
-    void updatedGroupData(QVector<Group> groups);
+    void updatedGroupData(Group group, QUuid id);
+    void sortedGroupData(QVector<QPair<Group, Qt::CheckState>> groups, QUuid id);
     void updatedPhoto(QUuid id);
     void updatedAudio(QUuid id);
     void updatedVideo(QUuid id);
     void updatedDoc(QUuid id);
     void sentMessage(QUuid id, Group group, PostNumber number);
-    void deletedPost(QString postId, QString ownerId);
     void userPhoto100Update();
     void userNameUpdate();
     void userGroupsUpdate();
-    void onGroupUpdated(Group group);
     void sendingFinished(QUuid id);
 
 public:
@@ -164,7 +164,8 @@ public:
     void setRepository(const std::shared_ptr<Repository> repository);
     bool tokenIsEmpty() const;
     void setAccessToken(const QString &token);
-    void getGroupInfoById(const QString &id);
+    void sortGroupsByCanPost(const QVector<QPair<Group, Qt::CheckState>> groups, QUuid id);
+    void getGroupById(const QString &groupId, QUuid id);
 
     const QPixmap &getUserPhoto100() const;
     const QString &getUserName() const;
@@ -192,10 +193,10 @@ private:
     QPixmap *downloadPhoto(const QUrl &url) const;
 
     void uploadMessageToGroup(const QUuid &id, const Group &group, const QString &message, const QString &attachments);
-    QString uploadPhotosToGroup(const Group &group, const QVector<Path> &photoPath, QUuid id = 0);
-    QString uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id = 0);
-    QString uploadDocsToGroup(const Group &group, const QVector<Path> &docsPaths, QUuid id = 0);
-    QString uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id = 0);
+    QString uploadPhotosToGroup(const Group &group, const QVector<QPair<Path, QByteArray>> &photoPaths, QUuid id = 0);
+    QString uploadAudiosToGroup(const QVector<QPair<Path, QByteArray>> &audioPaths, QUuid id = 0);
+    QString uploadDocsToGroup(const Group &group, const QVector<QPair<Path, QByteArray>> &docsPaths, QUuid id = 0);
+    QString uploadVideosToGroup(const QVector<QPair<Path, QByteArray>> &videoPaths, QUuid id = 0);
 
 private:
     const Link mVkApiLink = "https://api.vk.com/method/";

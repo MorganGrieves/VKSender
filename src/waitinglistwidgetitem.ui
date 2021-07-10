@@ -212,7 +212,7 @@ border-bottom-right-radius: 4px;
                   <string notr="true">color: black;</string>
                  </property>
                  <property name="text">
-                  <string>Название рассылки</string>
+                  <string>Нет названия</string>
                  </property>
                 </widget>
                </item>
@@ -236,55 +236,7 @@ border-bottom-right-radius: 4px;
                </property>
                <item>
                 <widget class="QWidget" name="widget" native="true">
-                 <layout class="QHBoxLayout" name="horizontalLayout_5">
-                  <item>
-                   <widget class="QLabel" name="peopleIconLabel">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16</width>
-                      <height>16</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="pixmap">
-                     <pixmap resource="resource/res.qrc">:/style/image/users1.png</pixmap>
-                    </property>
-                    <property name="scaledContents">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="receiverLabel">
-                    <property name="font">
-                     <font>
-                      <weight>75</weight>
-                      <bold>true</bold>
-                     </font>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">color:#C0C0C0;</string>
-                    </property>
-                    <property name="text">
-                     <string>Получатели: 0</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
+                 <layout class="QHBoxLayout" name="horizontalLayout_5"/>
                 </widget>
                </item>
               </layout>

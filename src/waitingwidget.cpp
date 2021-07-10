@@ -38,7 +38,7 @@ WaitingListWidgetItem * WaitingWidget::addListItem(const MessagePack *message)
 {
     WaitingListWidgetItem *item = new WaitingListWidgetItem(this);
     item->setFetcher(mFetcher);
-    if (!(message == nullptr))
+    if (message != nullptr)
         item->setMessagePack(message);
     connect(item, &WaitingListWidgetItem::deleteButtonReleased,
             this, &WaitingWidget::onDeleteButtonReleased);
@@ -70,6 +70,9 @@ void WaitingWidget::loadLists()
         QMessageBox::StandardButton reply =
                 QMessageBox::question(this, "VKSender", "Сохранить список групп?",
                                       QMessageBox::Yes|QMessageBox::No);
+
+        if (reply == QMessageBox::Cancel)
+            return;
 
         if (reply == QMessageBox::Yes)
         {

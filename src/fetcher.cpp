@@ -24,16 +24,15 @@ Fetcher::Fetcher(QObject *parent) : QObject(parent)
     mNetworkManager = new QNetworkAccessManager(this);
 
 
-//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-//    if(!settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString().isEmpty())
-//        setAccessToken(settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString());
-
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    if(!settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString().isEmpty())
+        setAccessToken(settings.value("Fetcher/vkApi.implicitFlowAccessToken").toString());
 }
 
 Fetcher::~Fetcher()
 {
-//    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
-//    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+    settings.setValue("Fetcher/vkApi.implicitFlowAccessToken", vkApi.implicitFlowAccessToken);
 }
 
 void Fetcher::setRepository(const std::shared_ptr<Repository> repository)
@@ -53,7 +52,7 @@ void Fetcher::setAccessToken(const QString &token)
     onUserDataUpdate();
 }
 
-void Fetcher::getGroupInfoById(const QString &id)
+void Fetcher::sortGroupsByCanPost(const QVector<QPair<Group, Qt::CheckState>> groups, QUuid id)
 {
     QUrl requestUrl(mVkApiLink
                     + vkApi.groupById.method);
@@ -61,7 +60,10 @@ void Fetcher::getGroupInfoById(const QString &id)
     params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
     params.addQueryItem("v", vkApi.apiVersion);
     params.addQueryItem("fields", vkApi.groupById.fields);
-    params.addQueryItem("group_id", id);
+    QString groupIds = "";
+    for (const auto & group : groups)
+        groupIds += group.first.vkid + ",";
+    params.addQueryItem("group_ids", groupIds);
     requestUrl.setQuery(params.query());
 
     QNetworkRequest request;
@@ -70,7 +72,72 @@ void Fetcher::getGroupInfoById(const QString &id)
     QNetworkReply *reply = mNetworkManager->get(request);
 
     connect(reply, &QNetworkReply::finished,
-            [reply, this]()
+            [reply, groups, id, this]()
+    {
+        QJsonParseError parseError;
+        const auto data = reply->readAll();
+        const auto document = QJsonDocument::fromJson(data, &parseError);
+
+        if (isJsonErrorReturned(parseError)
+                || isServerErrorReturned(document)
+                || isReplyErrorReturned(*reply))
+        {
+            qDebug() << "error vkApi.groupById.groupId";
+            reply->deleteLater();
+            return;
+        }
+
+        QVector<QPair<Group, Qt::CheckState>> sortedGroups;
+        const QJsonArray groupJsonArray = document.object()["response"].toArray();
+
+        foreach (const QJsonValue &value, groupJsonArray)
+        {
+            QJsonObject groupInfo = value.toObject();
+
+            Group group;
+            group.vkid = QString::number(groupInfo["id"].toDouble(), 'f', 0);
+            group.name = groupInfo["name"].toString();
+            group.screenName = groupInfo["screen_name"].toString();
+            group.photo50Link = groupInfo["photo_50"].toString();
+            group.photo50 = *downloadPhoto(QUrl(group.photo50Link));
+            group.canPost = groupInfo["can_post"].toInt() ? true : false;
+            group.type = groupInfo["type"].toString();
+
+            if (!group.canPost)
+                continue;
+
+            for (const auto &grp : groups)
+                if (grp.first.vkid == group.vkid)
+                {
+                    sortedGroups.push_back(QPair(group, grp.second));
+                    break;
+                }
+
+        }
+
+        emit sortedGroupData(groups, id);
+        reply->deleteLater();
+    });
+}
+
+void Fetcher::getGroupById(const QString &groupId, QUuid id)
+{
+    QUrl requestUrl(mVkApiLink
+                    + vkApi.groupById.method);
+    QUrlQuery params;
+    params.addQueryItem("access_token", vkApi.implicitFlowAccessToken);
+    params.addQueryItem("v", vkApi.apiVersion);
+    params.addQueryItem("fields", vkApi.groupById.fields);
+    params.addQueryItem("group_ids", groupId);
+    requestUrl.setQuery(params.query());
+
+    QNetworkRequest request;
+    request.setUrl(requestUrl);
+
+    QNetworkReply *reply = mNetworkManager->get(request);
+
+    connect(reply, &QNetworkReply::finished,
+            [reply, id, this]()
     {
         QJsonParseError parseError;
         const auto data = reply->readAll();
@@ -86,19 +153,20 @@ void Fetcher::getGroupInfoById(const QString &id)
         }
 
         const QJsonObject jsonResponse = document.object()["response"].toArray().at(0).toObject();
-        qDebug() << jsonResponse;
 
         Group group;
-
         group.vkid = QString::number(jsonResponse["id"].toDouble(), 'f', 0);
         group.name = jsonResponse["name"].toString();
         group.screenName = jsonResponse["screen_name"].toString();
         group.photo50Link = jsonResponse["photo_50"].toString();
         group.photo50 = *downloadPhoto(QUrl(group.photo50Link));
-        group.canPost = jsonResponse["can_post"].toBool();
+        group.canPost = jsonResponse["can_post"].toInt() ? true : false;
         group.type = jsonResponse["type"].toString();
 
-        emit onGroupUpdated(group);
+        if (!group.canPost)
+            return;
+
+        emit updatedGroupData(group, id);
         reply->deleteLater();
     });
 }
@@ -198,7 +266,6 @@ void Fetcher::onPostDelete(const QString postId, const QString ownerId)
         if (responseNumber == SUCCESS_NUMBER)
         {
             reply->deleteLater();
-            emit deletedPost(postId, ownerId);
         }
         else
         {
@@ -471,7 +538,7 @@ void Fetcher::uploadMessageToGroup(const QUuid &id, const Group &group, const QS
     groupLoop.exec();
 }
 
-QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<Path> &photoPaths, QUuid id)
+QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<QPair<Path, QByteArray>> &photoPaths, QUuid id)
 {
     QString attachments = "";
 
@@ -484,13 +551,19 @@ QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<Path> &ph
             [&sendedPhoto,
             photoPaths,
             &loop,
-            obj](QUuid id)
+            obj,
+            &id](QUuid tid)
     {
-        if (++sendedPhoto == photoPaths.size())
+        if (id == tid)
         {
-            obj->deleteLater();
-            loop.quit();
+            if (++sendedPhoto == photoPaths.size())
+            {
+                obj->deleteLater();
+                loop.quit();
+            }
         }
+        else
+            qDebug() << "oh fok" << id << tid;
 
     });
 
@@ -544,7 +617,7 @@ QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<Path> &ph
         for (std::size_t i = 0; i < photoPaths.size(); i++)
         {
             QTimer::singleShot(500,
-                               [reply,
+                               [
                                photoPaths,
                                group,
                                &attachments,
@@ -554,25 +627,23 @@ QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<Path> &ph
                                id,
                                this]()
             {
-                QFile *file = new QFile(photoPaths.at(i));
-
-                if (!file->open(QIODevice::ReadOnly))
-                {
-                    qCritical() << "File could not be opened:" << photoPaths.at(i);
-                    reply->deleteLater();
-                    loop.quit();
-                    throw "File could not be opened";
-                }
-
                 QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
                 QHttpPart imagePart;
-                imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/gif, image/jpg, image/jpeg, image/png"));
-                imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
-                                                                                        "name=\"photo\"; "
-                                                                                        "filename=\"" + file->fileName() + "\""));
-                imagePart.setBodyDevice(file);
-                file->setParent(multiPart);
+                imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/jpeg image/png image/gif"));
+
+                QTemporaryFile *tmp = new QTemporaryFile(QDir::tempPath() + QDir::separator() + "XXXXXX." + QFileInfo(photoPaths.at(i).first).suffix());
+
+                if (tmp->open())
+                {
+                    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
+                                                                                            "name=\"photo\";"
+                                                                                            "filename=\"" + tmp->fileName() + "\""));
+
+                    tmp->write(photoPaths.at(i).second);
+                    tmp->reset();
+                    imagePart.setBodyDevice(tmp);
+                }
 
                 multiPart->append(imagePart);
 
@@ -655,8 +726,8 @@ QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<Path> &ph
                             {
                                 qCritical() << "error vkApi.photos.saveWallPhoto finished: "
                                             << group.name << group.vkid << "|";
-                                newReply->deleteLater();
                                 loop.quit();
+                                newReply->deleteLater();
                                 throw "vkApi.photos.saveWallPhoto";
                             }
 
@@ -686,7 +757,7 @@ QString Fetcher::uploadPhotosToGroup(const Group &group, const QVector<Path> &ph
    return attachments;
 }
 
-QString Fetcher::uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id)
+QString Fetcher::uploadAudiosToGroup(const QVector<QPair<Path, QByteArray>> &audioPaths, QUuid id)
 {
     QString attachments = "";
 
@@ -700,12 +771,16 @@ QString Fetcher::uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id)
             [&sendedAudios,
             audioPaths,
             &loop,
-            obj](QUuid id)
+            obj,
+            &id](QUuid tid)
     {
-        if (++sendedAudios == audioPaths.size())
+        if (id == tid)
         {
-            obj->deleteLater();
-            loop.quit();
+            if (++sendedAudios == audioPaths.size())
+            {
+                obj->deleteLater();
+                loop.quit();
+            }
         }
     });
     QUrl getUpdateRequestUrl(mVkApiLink
@@ -756,8 +831,7 @@ QString Fetcher::uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id)
         for (std::size_t i = 0; i < audioPaths.size(); i++)
         {
             QTimer::singleShot(500,
-                               [reply,
-                               audioPaths,
+                               [audioPaths,
                                &attachments,
                                uploadUrl,
                                &loop,
@@ -765,25 +839,16 @@ QString Fetcher::uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id)
                                id,
                                this]()
             {
-                QFile *file = new QFile(audioPaths.at(i));
-
-                if (!file->open(QIODevice::ReadOnly))
-                {
-                    qCritical() << "File could not be opened:" << audioPaths.at(i);
-                    reply->deleteLater();
-                    loop.quit();
-                    throw "File could not be opened";
-                }
-
                 QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
                 QHttpPart imagePart;
                 imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/mpeg"));
+
                 imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
-                                                                                        "name=\"file\"; "
-                                                                                        "filename=\"" + file->fileName() + "\""));
-                imagePart.setBodyDevice(file);
-                file->setParent(multiPart);
+                                                                                        "name=\"file\";"
+                                                                                        "filename=\" filename \""));
+
+                imagePart.setBody(audioPaths.at(i).second);
 
                 multiPart->append(imagePart);
 
@@ -792,6 +857,7 @@ QString Fetcher::uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id)
                 QNetworkReply *transferReply = mNetworkManager->post(uploadUrlRequest, multiPart);
 
                 multiPart->setParent(transferReply);
+
                 connect(transferReply, &QNetworkReply::finished,
                         [transferReply,
                         id,
@@ -892,7 +958,7 @@ QString Fetcher::uploadAudiosToGroup(const QVector<Path> &audioPaths, QUuid id)
    return attachments;
 }
 
-QString Fetcher::uploadDocsToGroup(const Group &group, const QVector<Path> &docsPaths, QUuid id)
+QString Fetcher::uploadDocsToGroup(const Group &group, const QVector<QPair<Path, QByteArray>> &docsPaths, QUuid id)
 {
     QString attachments = "";
 
@@ -905,13 +971,15 @@ QString Fetcher::uploadDocsToGroup(const Group &group, const QVector<Path> &docs
             [&sendedDoc,
             docsPaths,
             &loop,
-            obj](QUuid id)
+            obj,
+            &id](QUuid tid)
     {
-        if (++sendedDoc == docsPaths.size())
-        {
-            obj->deleteLater();
-            loop.quit();
-        }
+        if (id == tid)
+            if (++sendedDoc == docsPaths.size())
+            {
+                obj->deleteLater();
+                loop.quit();
+            }
     });
 
     QUrl getWallUpdateRequestUrl(mVkApiLink
@@ -974,24 +1042,22 @@ QString Fetcher::uploadDocsToGroup(const Group &group, const QVector<Path> &docs
                                id,
                                this]()
             {
-                QFile *file = new QFile(docsPaths.at(i));
-
-                if (!file->open(QIODevice::ReadOnly))
-                {
-                    qCritical() << "File could not be opened:" << docsPaths.at(i);
-                    reply->deleteLater();
-                    loop.quit();
-                    throw "File could not be opened";
-                }
 
                 QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
                 QHttpPart imagePart;
-                imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
-                                                                                        "name=\"file\"; "
-                                                                                        "filename=\"" + file->fileName() + "\""));
-                imagePart.setBodyDevice(file);
-                file->setParent(multiPart);
+
+                QTemporaryFile *tmp = new QTemporaryFile(QDir::tempPath() + QDir::separator() + "XXXXXX." + QFileInfo(docsPaths.at(i).first).suffix(),
+                                                         multiPart);
+                if (tmp->open())
+                {
+                    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
+                                                                                            "name=\"file\";"
+                                                                                            "filename=\"" + tmp->fileName() + "\""));
+
+                    imagePart.setBodyDevice(tmp);
+                }
+
 
                 multiPart->append(imagePart);
 
@@ -1001,7 +1067,7 @@ QString Fetcher::uploadDocsToGroup(const Group &group, const QVector<Path> &docs
 
                 multiPart->setParent(transferReply);
 
-                QString fileName = QFileInfo(docsPaths.at(i)).baseName();
+                QString fileName = QFileInfo(docsPaths.at(i).first).baseName();
                 connect(transferReply, &QNetworkReply::finished,
                         [transferReply,
                         group,
@@ -1094,17 +1160,16 @@ QString Fetcher::uploadDocsToGroup(const Group &group, const QVector<Path> &docs
                     });
                 });
 
+                reply->deleteLater();
             });
-
         }
-        reply->deleteLater();
     });
    loop.exec();
 
    return attachments;
 }
 
-QString Fetcher::uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id)
+QString Fetcher::uploadVideosToGroup(const QVector<QPair<Path, QByteArray>> &videoPaths, QUuid id)
 {
     QString attachments = "";
 
@@ -1118,13 +1183,15 @@ QString Fetcher::uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id)
             [&sendedVideos,
             videoPaths,
             &loop,
-            obj](QUuid id)
+            obj,
+            &id](QUuid tid)
     {
-        if (++sendedVideos == videoPaths.size())
-        {
-            obj->deleteLater();
-            loop.quit();
-        }
+        if (id == tid)
+            if (++sendedVideos == videoPaths.size())
+            {
+                obj->deleteLater();
+                loop.quit();
+            }
     });
 
     for (std::size_t i = 0; i < videoPaths.size(); i++)
@@ -1144,7 +1211,7 @@ QString Fetcher::uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id)
             QUrlQuery params;
             params.addQueryItem("access_token",vkApi.implicitFlowAccessToken);
             params.addQueryItem("v", vkApi.apiVersion);
-            params.addQueryItem("name", QFileInfo(videoPaths.at(i)).baseName());
+            params.addQueryItem("name", QFileInfo(videoPaths.at(i).first).baseName());
             requestUrl.setQuery(params);
 
             QNetworkRequest request;
@@ -1165,8 +1232,6 @@ QString Fetcher::uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id)
                 const auto data = transferReply->readAll();
                 const auto document = QJsonDocument::fromJson(data, &parseError);
 
-                const QJsonObject jsonServerErrorObject = document.object()["error"].toObject();
-
                 if (isJsonErrorReturned(parseError)
                         || isServerErrorReturned(document)
                         || isReplyErrorReturned(*transferReply))
@@ -1184,27 +1249,24 @@ QString Fetcher::uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id)
 
                 qDebug() << "vkApi.videos.save" << jsonResponse;
 
-                QFile *file = new QFile(videoPaths.at(i));
-
-                if (!file->open(QIODevice::ReadOnly))
-                {
-                    qCritical() << "File could not be opened:" << videoPaths.at(i);
-                    transferReply->deleteLater();
-                    loop.quit();
-                    throw "File could not be opened";
-                }
-
                 QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
                 QHttpPart imagePart;
-                //imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/mpeg"));
+                imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/jpeg image/png image/gif"));
+
                 imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; "
-                                                                                        "name=\"video_file\"; "
-                                                                                        "filename=\"" + file->fileName() + "\""));
-                imagePart.setBodyDevice(file);
-                file->setParent(multiPart);
+                                                                                        "name=\"video_file\";"
+                                                                                        "filename=\" filename \""));
+
+                imagePart.setBody(videoPaths.at(i).second);
 
                 multiPart->append(imagePart);
+
+                QNetworkRequest uploadUrlRequest;
+                uploadUrlRequest.setUrl(QUrl(uploadUrl));
+                QNetworkReply *transferReply = mNetworkManager->post(uploadUrlRequest, multiPart);
+
+                multiPart->setParent(transferReply);
 
                 QUrlQuery params;
                 params.addQueryItem("access_token",vkApi.implicitFlowAccessToken);
@@ -1218,7 +1280,6 @@ QString Fetcher::uploadVideosToGroup(const QVector<Path> &videoPaths, QUuid id)
 
                 multiPart->setParent(newReply);
                 QString ownerId = QString::number(jsonResponse["owner_id"].toInt());
-
 
                 connect(newReply, &QNetworkReply::finished,
                         [newReply,

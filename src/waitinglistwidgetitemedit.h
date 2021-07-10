@@ -30,15 +30,25 @@ signals:
     void backButtonReleased();
 
 public:
+    enum DataRoles
+    {
+        PathRole = Qt::UserRole,
+        DataRole
+    };
+
     explicit WaitingListWidgetItemEdit(QWidget *parent = nullptr);
     WaitingListWidgetItemEdit(const WaitingListWidgetItemEdit & item);
     ~WaitingListWidgetItemEdit();
 
     void setFetcher(const std::shared_ptr<Fetcher> fetcher);
+
     QString getPackName() const;
     void setMessagePack(const MessagePack *message);
+
     int getCheckedGroupsNumber();
     MessagePack getMessageInfo() const;
+
+    void setId(const QUuid &id);
 
 private slots:
     void onGroupListWidgetItemClicked(QListWidgetItem *item);
@@ -87,7 +97,7 @@ private:
 
     bool mSaveFlag = false;
 
-    const Qt::ItemDataRole mPathRole = Qt::UserRole;
+    QUuid mId;
 };
 
 #endif // WAITINGLISTWIDGETITEMEDIT_H

@@ -20,17 +20,19 @@ void LaunchedWidget::addLaunchedItem(const MessagePack &pack)
 {
     LaunchedListWidgetItem *item = new LaunchedListWidgetItem(this);
     item->setFetcher(mFetcher);
-    ui->listWidget->layout()->addWidget(item);
-    ui->packCounterLabel->setNum(listSize());
+
     connect(item, &LaunchedListWidgetItem::sendingFinished,
             [this, item](SendingResult result)
    {
+        item->disconnect(item, nullptr, nullptr, nullptr);
         delete item;
         ui->listWidget->layout()->update();
         ui->packCounterLabel->setNum(listSize());
         emit sendingFinished(result);
     });
 
+    ui->listWidget->layout()->addWidget(item);
+    ui->packCounterLabel->setNum(listSize());
     item->setMessagePackAndLaunch(pack);
 }
 

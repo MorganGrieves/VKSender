@@ -4,6 +4,9 @@
 #include <QString>
 #include <QPixmap>
 #include <QUuid>
+#include <QPair>
+#include <QImage>
+#include <QFileInfo>
 
 #define ORGANIZATION_NAME "Organization Name"
 #define APPLICATION_NAME "VKSender"
@@ -34,10 +37,10 @@ struct MessagePack
     QString dateCreation = "";
     QString message = "";
     QVector<QPair<Group, Qt::CheckState>> groups;
-    QVector<Path> photoPaths;
-    QVector<Path> videoPaths;
-    QVector<Path> docPaths;
-    QVector<Path> audioPaths;
+    QVector<QPair<Path, QByteArray>> photoPaths;
+    QVector<QPair<Path, QByteArray>> videoPaths;
+    QVector<QPair<Path, QByteArray>> docPaths;
+    QVector<QPair<Path, QByteArray>> audioPaths;
     int version = 1;
 };
 
